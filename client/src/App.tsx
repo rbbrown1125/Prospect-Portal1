@@ -11,6 +11,7 @@ import Templates from "@/pages/templates";
 import Content from "@/pages/content";
 import Analytics from "@/pages/analytics";
 import Prospects from "@/pages/prospects";
+import TemplatePreview from "@/pages/template-preview";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -27,7 +28,10 @@ function Router() {
   return (
     <Switch>
       {!isAuthenticated ? (
-        <Route path="/" component={Landing} />
+        <>
+          <Route path="/" component={Landing} />
+          <Route path="/preview/template/:id" component={TemplatePreview} />
+        </>
       ) : (
         <>
           <Route path="/" component={Dashboard} />
@@ -36,6 +40,7 @@ function Router() {
           <Route path="/content" component={Content} />
           <Route path="/analytics" component={Analytics} />
           <Route path="/prospects" component={Prospects} />
+          <Route path="/preview/template/:id" component={TemplatePreview} />
         </>
       )}
       <Route component={NotFound} />

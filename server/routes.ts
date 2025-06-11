@@ -167,6 +167,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Template preview route
+  app.get('/preview/template/:id', async (req, res) => {
+    try {
+      const templates = await storage.getTemplates();
+      const template = templates.find(t => t.id === parseInt(req.params.id));
+      
+      if (!template) {
+        return res.status(404).json({ message: "Template not found" });
+      }
+      
+      // Create sample data for the template
+      const sampleData = {
+        company: "Acme Corporation",
+        tagline: "Innovative Solutions for Modern Business",
+        problem_statement: "Businesses struggle with outdated processes that limit growth and efficiency.",
+        solution_details: "Our cutting-edge platform streamlines operations and drives measurable results.",
+        feature_1: "Advanced Analytics Dashboard",
+        feature_2: "Real-time Collaboration Tools", 
+        feature_3: "Automated Workflow Management",
+        pricing_info: "Starting at $99/month with flexible scaling options",
+        call_to_action: "Schedule a demo to see how we can transform your business",
+        product_name: "ProSuite Platform",
+        product_tagline: "The complete business automation solution",
+        startup_name: "TechFlow Solutions",
+        elevator_pitch: "Revolutionizing business processes through AI-powered automation"
+      };
+      
+      res.json({
+        template,
+        sampleData,
+        previewMode: true
+      });
+    } catch (error) {
+      console.error("Error fetching template preview:", error);
+      res.status(500).json({ message: "Failed to fetch template preview" });
+    }
+  });
+
   // Public site access (for prospects)
   app.get('/site/:id', async (req, res) => {
     try {

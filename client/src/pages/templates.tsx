@@ -79,9 +79,18 @@ export default function Templates() {
                       >
                         {template.category}
                       </Badge>
-                      <Button size="sm" variant="outline">
-                        Use Template
-                      </Button>
+                      <div className="flex space-x-2">
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => window.open(`/preview/template/${template.id}`, '_blank')}
+                        >
+                          Preview
+                        </Button>
+                        <Button size="sm" variant="outline">
+                          Use Template
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
