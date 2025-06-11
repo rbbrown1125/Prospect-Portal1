@@ -12,6 +12,7 @@ import Content from "@/pages/content";
 import Analytics from "@/pages/analytics";
 import Prospects from "@/pages/prospects";
 import TemplatePreview from "@/pages/template-preview";
+import SiteViewer from "@/pages/site-viewer";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -36,6 +37,7 @@ function Router() {
         <>
           <Route path="/" component={Dashboard} />
           <Route path="/sites" component={Sites} />
+          <Route path="/sites/:id" component={SiteViewer} />
           <Route path="/templates" component={Templates} />
           <Route path="/content" component={Content} />
           <Route path="/analytics" component={Analytics} />

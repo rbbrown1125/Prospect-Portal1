@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { useLocation } from "wouter";
 import Sidebar from "@/components/sidebar";
 import CreateSiteModal from "@/components/create-site-modal";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import { Plus, Eye, Edit, Trash2 } from "lucide-react";
 
 export default function Sites() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [, setLocation] = useLocation();
 
   const { data: sites, isLoading } = useQuery({
     queryKey: ['/api/sites'],
@@ -82,7 +84,12 @@ export default function Sites() {
                         </span>
                       </div>
                       <div className="flex items-center space-x-2 pt-2">
-                        <Button size="sm" variant="outline" className="flex-1">
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="flex-1"
+                          onClick={() => setLocation(`/sites/${site.id}`)}
+                        >
                           <Eye className="h-3 w-3 mr-1" />
                           View
                         </Button>
