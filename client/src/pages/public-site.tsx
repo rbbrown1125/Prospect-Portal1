@@ -283,7 +283,7 @@ export default function PublicSite() {
     );
   }
 
-  const template = Array.isArray(templates) ? templates.find((t: any) => t.id === site.templateId) : null;
+  const template = templates && Array.isArray(templates) ? templates.find((t: any) => t.id === site.templateId) : null;
 
   return (
     <div className="min-h-screen bg-white">
