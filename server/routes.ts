@@ -205,6 +205,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Public site API routes (for prospects)
+  app.get('/api/public/sites/:id', async (req, res) => {
+    try {
+      const site = await storage.getPublicSite(req.params.id);
+      if (!site) {
+        return res.status(404).json({ message: "Site not found" });
+      }
+      
+      // Only return basic info, not the full site content
+      res.json({ 
+        id: site.id, 
+        name: site.name, 
+        requiresPassword: !!site.accessPassword 
+      });
+    } catch (error) {
+      console.error("Error fetching public site:", error);
+      res.status(500).json({ message: "Failed to fetch site" });
+    }
+  });
+
+  app.post('/api/public/sites/:id/authenticate', async (req, res) => {
+    try {
+      const siteId = req.params.id;
+      const { password } = req.body;
+      
+      const site = await storage.authenticateProspectSite(siteId, password);
+      
+      if (!site) {
+        return res.status(401).json({ message: "Invalid password" });
+      }
+      
+      res.json(site);
+    } catch (error) {
+      console.error("Error authenticating site:", error);
+      res.status(500).json({ message: "Authentication failed" });
+    }
+  });
+
+  app.post('/api/public/sites/:id/view', async (req, res) => {
+    try {
+      const siteId = req.params.id;
+      
+      await storage.recordSiteView({
+        siteId,
+        viewedAt: new Date(),
+        ipAddress: req.ip || req.connection.remoteAddress,
+        userAgent: req.get('User-Agent')
+      });
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error recording site view:", error);
+      res.status(500).json({ message: "Failed to record view" });
+    }
+  });
+
   // Public site access (for prospects)
   app.get('/site/:id', async (req, res) => {
     try {

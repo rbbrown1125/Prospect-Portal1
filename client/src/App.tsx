@@ -13,6 +13,7 @@ import Analytics from "@/pages/analytics";
 import Prospects from "@/pages/prospects";
 import TemplatePreview from "@/pages/template-preview";
 import SiteViewer from "@/pages/site-viewer";
+import PublicSite from "@/pages/public-site";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -32,6 +33,7 @@ function Router() {
         <>
           <Route path="/" component={Landing} />
           <Route path="/preview/template/:id" component={TemplatePreview} />
+          <Route path="/site/:id" component={PublicSite} />
         </>
       ) : (
         <>
@@ -43,6 +45,7 @@ function Router() {
           <Route path="/analytics" component={Analytics} />
           <Route path="/prospects" component={Prospects} />
           <Route path="/preview/template/:id" component={TemplatePreview} />
+          <Route path="/site/:id" component={PublicSite} />
         </>
       )}
       <Route component={NotFound} />
