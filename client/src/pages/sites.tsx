@@ -21,25 +21,27 @@ export default function Sites() {
       <Sidebar />
       
       <main className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white border-b border-slate-200 px-6 py-4">
+        <header className="bg-white border-b border-slate-200 px-4 lg:px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-slate-900">My Sites</h1>
-              <p className="text-slate-600 mt-1">Manage all your prospect sites</p>
+              <h1 className="text-xl lg:text-2xl font-bold text-slate-900">My Sites</h1>
+              <p className="text-slate-600 mt-1 text-sm lg:text-base">Manage all your prospect sites</p>
             </div>
             <Button 
               onClick={() => setIsCreateModalOpen(true)}
               className="bg-primary hover:bg-primary/90 text-white flex items-center space-x-2"
+              size="sm"
             >
               <Plus className="h-4 w-4" />
-              <span>Create New Site</span>
+              <span className="hidden sm:inline">Create New Site</span>
+              <span className="sm:hidden">Create</span>
             </Button>
           </div>
         </header>
 
-        <div className="flex-1 overflow-auto p-6">
+        <div className="flex-1 overflow-auto p-4 lg:p-6">
           {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
               {[...Array(6)].map((_, i) => (
                 <Card key={i} className="animate-pulse">
                   <CardHeader>
@@ -54,27 +56,27 @@ export default function Sites() {
               ))}
             </div>
           ) : sites && sites.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
               {sites.map((site: any) => (
                 <Card key={site.id} className="hover:shadow-lg transition-shadow">
-                  <CardHeader>
+                  <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
-                      <div>
-                        <CardTitle className="text-lg">{site.name}</CardTitle>
-                        <p className="text-sm text-slate-600 mt-1">{site.prospectName}</p>
+                      <div className="min-w-0 flex-1">
+                        <CardTitle className="text-base lg:text-lg truncate">{site.name}</CardTitle>
+                        <p className="text-xs lg:text-sm text-slate-600 mt-1 truncate">{site.prospectName}</p>
                       </div>
-                      <Badge variant={site.isActive ? "default" : "secondary"}>
+                      <Badge variant={site.isActive ? "default" : "secondary"} className="flex-shrink-0 text-xs">
                         {site.isActive ? "Active" : "Draft"}
                       </Badge>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between text-sm">
+                    <div className="space-y-2 lg:space-y-3">
+                      <div className="flex items-center justify-between text-xs lg:text-sm">
                         <span className="text-slate-600">Views:</span>
                         <span className="font-medium">{site.views || 0}</span>
                       </div>
-                      <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center justify-between text-xs lg:text-sm">
                         <span className="text-slate-600">Last accessed:</span>
                         <span className="font-medium">
                           {site.lastAccessed 
@@ -87,18 +89,20 @@ export default function Sites() {
                         <Button 
                           size="sm" 
                           variant="outline" 
-                          className="flex-1"
+                          className="flex-1 text-xs lg:text-sm"
                           onClick={() => setLocation(`/sites/${site.id}`)}
                         >
-                          <Eye className="h-3 w-3 mr-1" />
-                          View
+                          <Eye className="h-3 w-3 lg:h-4 lg:w-4 mr-1" />
+                          <span className="hidden sm:inline">View</span>
+                          <span className="sm:hidden">👁</span>
                         </Button>
-                        <Button size="sm" variant="outline" className="flex-1">
-                          <Edit className="h-3 w-3 mr-1" />
-                          Edit
+                        <Button size="sm" variant="outline" className="flex-1 text-xs lg:text-sm">
+                          <Edit className="h-3 w-3 lg:h-4 lg:w-4 mr-1" />
+                          <span className="hidden sm:inline">Edit</span>
+                          <span className="sm:hidden">✏️</span>
                         </Button>
                         <Button size="sm" variant="outline" className="text-destructive">
-                          <Trash2 className="h-3 w-3" />
+                          <Trash2 className="h-3 w-3 lg:h-4 lg:w-4" />
                         </Button>
                       </div>
                     </div>
@@ -107,17 +111,20 @@ export default function Sites() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-16">
-              <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Plus className="h-8 w-8 text-slate-400" />
+            <div className="text-center py-12 lg:py-16 px-4">
+              <div className="w-12 h-12 lg:w-16 lg:h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Plus className="h-6 w-6 lg:h-8 lg:w-8 text-slate-400" />
               </div>
-              <h3 className="text-lg font-medium text-slate-900 mb-2">No sites yet</h3>
-              <p className="text-slate-600 mb-6">Create your first prospect site to get started.</p>
+              <h3 className="text-base lg:text-lg font-medium text-slate-900 mb-2">No sites yet</h3>
+              <p className="text-sm lg:text-base text-slate-600 mb-6">Create your first prospect site to get started.</p>
               <Button 
                 onClick={() => setIsCreateModalOpen(true)}
                 className="bg-primary hover:bg-primary/90 text-white"
+                size="sm"
               >
-                Create Your First Site
+                <Plus className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Create Your First Site</span>
+                <span className="sm:hidden">Create Site</span>
               </Button>
             </div>
           )}
