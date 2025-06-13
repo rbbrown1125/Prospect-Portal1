@@ -12,7 +12,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Dashboard stats
   app.get('/api/dashboard/stats', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const stats = await storage.getDashboardStats(userId);
       res.json(stats);
     } catch (error) {
@@ -24,7 +24,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Sites routes
   app.get('/api/sites', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const sites = await storage.getUserSites(userId);
       res.json(sites);
     } catch (error) {
@@ -35,7 +35,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/sites/my', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const mySites = await storage.getMySites(userId);
       res.json(mySites);
     } catch (error) {
@@ -46,7 +46,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/sites/team', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const teamSites = await storage.getTeamSites(userId);
       res.json(teamSites);
     } catch (error) {
@@ -57,7 +57,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/sites', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const siteData = insertSiteSchema.parse({ ...req.body, userId });
       const site = await storage.createSite(siteData);
       res.json(site);
@@ -72,7 +72,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/sites/:id', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const site = await storage.getSite(req.params.id, userId);
       if (!site) {
         return res.status(404).json({ message: "Site not found" });
@@ -86,7 +86,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch('/api/sites/:id', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const updates = req.body;
       const site = await storage.updateSite(req.params.id, userId, updates);
       if (!site) {
@@ -101,7 +101,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete('/api/sites/:id', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const success = await storage.deleteSite(req.params.id, userId);
       if (!success) {
         return res.status(404).json({ message: "Site not found" });
@@ -141,7 +141,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Content library routes
   app.get('/api/content', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const content = await storage.getUserContent(userId);
       res.json(content);
     } catch (error) {
@@ -152,7 +152,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/content', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const contentData = insertContentItemSchema.parse({ ...req.body, userId });
       const content = await storage.createContentItem(contentData);
       res.json(content);
@@ -168,7 +168,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Prospects routes
   app.get('/api/prospects', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const prospects = await storage.getProspects(userId);
       res.json(prospects);
     } catch (error) {
@@ -179,7 +179,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/prospects', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const prospectData = {
         ...req.body,
         userId,
@@ -194,7 +194,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch('/api/prospects/:id', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const prospectId = req.params.id;
       const prospect = await storage.updateProspect(prospectId, userId, req.body);
       if (!prospect) {
@@ -209,7 +209,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete('/api/prospects/:id', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const prospectId = req.params.id;
       const deleted = await storage.deleteProspect(prospectId, userId);
       if (!deleted) {
@@ -225,7 +225,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Files routes
   app.get('/api/files', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const files = await storage.getUserFiles(userId);
       res.json(files);
     } catch (error) {
@@ -236,7 +236,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/files', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const fileData = {
         ...req.body,
         userId,
@@ -251,7 +251,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete('/api/files/:id', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const fileId = req.params.id;
       const deleted = await storage.deleteFile(fileId, userId);
       if (!deleted) {
@@ -267,7 +267,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Analytics routes
   app.get('/api/sites/:id/analytics', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const analytics = await storage.getSiteAnalytics(req.params.id, userId);
       res.json(analytics);
     } catch (error) {

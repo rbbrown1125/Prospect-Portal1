@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import Dashboard from "@/pages/dashboard";
-import Landing from "@/pages/landing";
+import Auth from "@/pages/auth";
 import Sites from "@/pages/sites";
 import SiteEdit from "@/pages/site-edit";
 import Templates from "@/pages/templates";
@@ -32,7 +32,7 @@ function Router() {
     <Switch>
       {!isAuthenticated ? (
         <>
-          <Route path="/" component={Landing} />
+          <Route path="/" component={Auth} />
           <Route path="/preview/template/:id" component={TemplatePreview} />
           <Route path="/site/:id" component={PublicSite} />
         </>
