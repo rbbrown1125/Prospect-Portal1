@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Presentation, BarChart3, Lock, Eye } from "lucide-react";
+import { FileText, Presentation, BarChart3, Lock, Eye, Share2 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
 export default function PublicSite() {

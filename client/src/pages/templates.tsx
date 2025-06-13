@@ -1,14 +1,24 @@
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import Sidebar from "@/components/sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FileText, Presentation, BarChart3 } from "lucide-react";
+import CreateSiteModal from "@/components/create-site-modal";
 
 export default function Templates() {
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(null);
+
   const { data: templates, isLoading } = useQuery({
     queryKey: ['/api/templates'],
   });
+
+  const handleUseTemplate = (templateId: number) => {
+    setSelectedTemplateId(templateId);
+    setShowCreateModal(true);
+  };
 
   const getTemplateIcon = (category: string) => {
     switch (category.toLowerCase()) {
@@ -87,7 +97,11 @@ export default function Templates() {
                         >
                           Preview
                         </Button>
-                        <Button size="sm" variant="outline">
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => handleUseTemplate(template.id)}
+                        >
                           Use Template
                         </Button>
                       </div>
@@ -107,6 +121,15 @@ export default function Templates() {
           )}
         </div>
       </main>
+
+      <CreateSiteModal 
+        isOpen={showCreateModal}
+        onClose={() => {
+          setShowCreateModal(false);
+          setSelectedTemplateId(null);
+        }}
+        preSelectedTemplateId={selectedTemplateId}
+      />
     </div>
   );
 }

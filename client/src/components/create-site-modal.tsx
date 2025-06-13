@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -17,13 +17,14 @@ import { FileText, Presentation, BarChart3, X } from "lucide-react";
 interface CreateSiteModalProps {
   isOpen: boolean;
   onClose: () => void;
+  preSelectedTemplateId?: number | null;
 }
 
-export default function CreateSiteModal({ isOpen, onClose }: CreateSiteModalProps) {
+export default function CreateSiteModal({ isOpen, onClose, preSelectedTemplateId }: CreateSiteModalProps) {
   const [siteName, setSiteName] = useState("");
   const [prospectName, setProspectName] = useState("");
   const [prospectEmail, setProspectEmail] = useState("");
-  const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(null);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(preSelectedTemplateId || null);
   const [accessPassword, setAccessPassword] = useState("");
 
   const { toast } = useToast();
