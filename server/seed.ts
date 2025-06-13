@@ -242,8 +242,11 @@ const sampleTemplates = [
 
 export async function seedTemplates() {
   try {
-    // Clear existing templates and add new file-sharing focused ones
-    await db.delete(templates);
+    const existingTemplates = await db.select().from(templates);
+    if (existingTemplates.length > 0) {
+      console.log("Templates already exist, skipping seed");
+      return;
+    }
     
     for (const template of sampleTemplates) {
       await db.insert(templates).values(template);

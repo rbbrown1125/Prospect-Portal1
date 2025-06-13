@@ -94,6 +94,8 @@ export default function CreateSiteModal({ isOpen, onClose }: CreateSiteModalProp
         return <Presentation className="h-5 w-5 text-purple-600" />;
       case 'analytics':
         return <BarChart3 className="h-5 w-5 text-success" />;
+      case 'file sharing':
+        return <FileText className="h-5 w-5 text-blue-600" />;
       default:
         return <FileText className="h-5 w-5 text-slate-600" />;
     }
@@ -101,8 +103,8 @@ export default function CreateSiteModal({ isOpen, onClose }: CreateSiteModalProp
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogHeader className="shrink-0">
           <DialogTitle className="flex items-center justify-between">
             Create New Site
             <Button variant="ghost" size="sm" onClick={handleClose}>
@@ -111,8 +113,9 @@ export default function CreateSiteModal({ isOpen, onClose }: CreateSiteModalProp
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
+        <div className="flex-1 overflow-y-auto pr-2">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
             <Label htmlFor="siteName">Site Name</Label>
             <Input
               id="siteName"
@@ -155,42 +158,48 @@ export default function CreateSiteModal({ isOpen, onClose }: CreateSiteModalProp
           
           <div>
             <Label>Select Template</Label>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
-              {templates?.map((template: any) => (
-                <Card
-                  key={template.id}
-                  className={`p-4 cursor-pointer transition-all ${
-                    selectedTemplateId === template.id
-                      ? "border-primary bg-primary/5"
-                      : "border-slate-200 hover:border-slate-300"
-                  }`}
-                  onClick={() => setSelectedTemplateId(template.id)}
-                >
-                  <div className="flex items-center space-x-3">
-                    {getTemplateIcon(template.category)}
-                    <div>
-                      <h3 className="font-medium text-sm">{template.name}</h3>
-                      <p className="text-xs text-slate-600 mt-1">{template.description}</p>
+            <div className="max-h-96 overflow-y-auto mt-2 border border-slate-200 rounded-lg p-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {templates?.map((template: any) => (
+                  <Card
+                    key={template.id}
+                    className={`p-3 cursor-pointer transition-all ${
+                      selectedTemplateId === template.id
+                        ? "border-primary bg-primary/5"
+                        : "border-slate-200 hover:border-slate-300"
+                    }`}
+                    onClick={() => setSelectedTemplateId(template.id)}
+                  >
+                    <div className="flex items-start space-x-3">
+                      {getTemplateIcon(template.category)}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium text-sm truncate">{template.name}</h3>
+                        <p className="text-xs text-slate-600 mt-1 line-clamp-2">{template.description}</p>
+                        <span className="inline-block px-2 py-1 text-xs bg-slate-100 text-slate-700 rounded mt-2">
+                          {template.category}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                </Card>
-              ))}
+                  </Card>
+                ))}
+              </div>
             </div>
           </div>
 
-          <div className="flex justify-end space-x-4 pt-4">
-            <Button type="button" variant="outline" onClick={handleClose}>
-              Cancel
-            </Button>
-            <Button 
-              type="submit" 
-              disabled={createSiteMutation.isPending}
-              className="bg-primary hover:bg-primary/90"
-            >
-              {createSiteMutation.isPending ? "Creating..." : "Create Site"}
-            </Button>
-          </div>
-        </form>
+            <div className="flex justify-end space-x-4 pt-4">
+              <Button type="button" variant="outline" onClick={handleClose}>
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={createSiteMutation.isPending}
+                className="bg-primary hover:bg-primary/90"
+              >
+                {createSiteMutation.isPending ? "Creating..." : "Create Site"}
+              </Button>
+            </div>
+          </form>
+        </div>
       </DialogContent>
     </Dialog>
   );
