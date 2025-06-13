@@ -34,6 +34,13 @@ export default function CreateSiteModal({ isOpen, onClose, preSelectedTemplateId
     queryKey: ['/api/templates'],
   });
 
+  // Update selected template when preSelectedTemplateId changes
+  useEffect(() => {
+    if (preSelectedTemplateId) {
+      setSelectedTemplateId(preSelectedTemplateId);
+    }
+  }, [preSelectedTemplateId]);
+
   const createSiteMutation = useMutation({
     mutationFn: async (siteData: any) => {
       return await apiRequest("POST", "/api/sites", siteData);
@@ -82,7 +89,7 @@ export default function CreateSiteModal({ isOpen, onClose, preSelectedTemplateId
     setSiteName("");
     setProspectName("");
     setProspectEmail("");
-    setSelectedTemplateId(null);
+    setSelectedTemplateId(preSelectedTemplateId || null);
     setAccessPassword("");
     onClose();
   };
