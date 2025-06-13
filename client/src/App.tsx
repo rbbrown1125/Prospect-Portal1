@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import Dashboard from "@/pages/dashboard";
 import Landing from "@/pages/landing";
 import Sites from "@/pages/sites";
+import SiteEdit from "@/pages/site-edit";
 import Templates from "@/pages/templates";
 import Content from "@/pages/content";
 import Analytics from "@/pages/analytics";
@@ -40,6 +41,7 @@ function Router() {
           <Route path="/" component={Dashboard} />
           <Route path="/sites" component={Sites} />
           <Route path="/sites/:id" component={SiteViewer} />
+          <Route path="/sites/:id/edit" component={SiteEdit} />
           <Route path="/templates" component={Templates} />
           <Route path="/content" component={Content} />
           <Route path="/analytics" component={Analytics} />

@@ -96,7 +96,12 @@ export default function Sites() {
                           <span className="hidden sm:inline">View</span>
                           <span className="sm:hidden">👁</span>
                         </Button>
-                        <Button size="sm" variant="outline" className="flex-1 text-xs lg:text-sm">
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="flex-1 text-xs lg:text-sm"
+                          onClick={() => setLocation(`/sites/${site.id}/edit`)}
+                        >
                           <Edit className="h-3 w-3 lg:h-4 lg:w-4 mr-1" />
                           <span className="hidden sm:inline">Edit</span>
                           <span className="sm:hidden">✏️</span>
