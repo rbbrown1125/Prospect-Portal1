@@ -91,45 +91,6 @@ export default function Auth() {
               <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-6 leading-tight">
                 Welcome! Unlock Amazing with Infor CloudSuite Industrial!
               </h1>
-              <p className="text-xl text-slate-600 dark:text-slate-300 mb-8">
-                Create personalized, secure landing pages for your sales prospects with powerful file sharing capabilities.
-              </p>
-            </div>
-
-            <div className="grid gap-6">
-              <div className="flex items-start space-x-4">
-                <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
-                  <Shield className="w-5 h-5 text-blue-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-slate-900 dark:text-white">Secure & Protected</h3>
-                  <p className="text-slate-600 dark:text-slate-300">Each prospect site is password-protected with individual access controls.</p>
-                </div>
-              </div>
-
-              <div className="flex items-start space-x-4">
-                <div className="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
-                  <Zap className="w-5 h-5 text-green-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-slate-900 dark:text-white">Quick Setup</h3>
-                  <p className="text-slate-600 dark:text-slate-300">Generate professional landing pages in minutes using customizable templates.</p>
-                </div>
-              </div>
-
-              <div className="flex items-start space-x-4">
-                <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center">
-                  <Users className="w-5 h-5 text-purple-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-slate-900 dark:text-white">Team Collaboration</h3>
-                  <p className="text-slate-600 dark:text-slate-300">Share and manage prospect resources across your sales team.</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="text-center lg:text-left text-sm text-slate-500 dark:text-slate-400">
-              Powered by Godlan Solutions • Restricted to @godlan.com users
             </div>
           </div>
 
