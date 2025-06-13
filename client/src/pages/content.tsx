@@ -93,6 +93,18 @@ export default function Content() {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Check file size (limit to 25MB to account for base64 expansion)
+      const maxSize = 25 * 1024 * 1024; // 25MB
+      if (file.size > maxSize) {
+        toast({
+          title: "File too large",
+          description: "Please select a file smaller than 25MB",
+          variant: "destructive",
+        });
+        e.target.value = ''; // Clear the input
+        return;
+      }
+      
       setSelectedFile(file);
       setFormData(prev => ({
         ...prev,
@@ -355,7 +367,7 @@ export default function Content() {
 
               {uploadMethod === 'file' ? (
                 <div>
-                  <Label htmlFor="file-upload">Select File *</Label>
+                  <Label htmlFor="file-upload">Select File * (max 25MB)</Label>
                   <Input
                     id="file-upload"
                     type="file"
@@ -363,7 +375,11 @@ export default function Content() {
                     accept="*/*"
                     required
                     className="cursor-pointer"
+                    disabled={createFileMutation.isPending}
                   />
+                  <p className="text-xs text-slate-500 mt-1">
+                    Supported formats: Images, videos, audio, documents, and more
+                  </p>
                   {selectedFile && (
                     <div className="mt-2 p-2 bg-slate-50 rounded text-sm">
                       <div className="flex items-center gap-2">
@@ -431,14 +447,15 @@ export default function Content() {
                   type="button" 
                   variant="outline" 
                   onClick={() => setShowUploadModal(false)}
+                  disabled={createFileMutation.isPending}
                 >
                   Cancel
                 </Button>
                 <Button 
                   type="submit"
-                  disabled={createFileMutation.isPending}
+                  disabled={createFileMutation.isPending || (uploadMethod === 'file' && !selectedFile)}
                 >
-                  Upload File
+                  {createFileMutation.isPending ? 'Uploading...' : 'Upload File'}
                 </Button>
               </div>
             </form>
