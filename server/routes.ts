@@ -1,28 +1,16 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupAuth, requireAuth } from "./auth";
 import { insertSiteSchema, insertTemplateSchema, insertContentItemSchema, insertSiteViewSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
-  await setupAuth(app);
-
-  // Auth routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      res.json(user);
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      res.status(500).json({ message: "Failed to fetch user" });
-    }
-  });
+  setupAuth(app);
 
   // Dashboard stats
-  app.get('/api/dashboard/stats', isAuthenticated, async (req: any, res) => {
+  app.get('/api/dashboard/stats', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const stats = await storage.getDashboardStats(userId);
@@ -34,7 +22,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Sites routes
-  app.get('/api/sites', isAuthenticated, async (req: any, res) => {
+  app.get('/api/sites', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const sites = await storage.getUserSites(userId);
@@ -45,7 +33,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/sites/my', isAuthenticated, async (req: any, res) => {
+  app.get('/api/sites/my', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const mySites = await storage.getMySites(userId);
@@ -56,7 +44,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/sites/team', isAuthenticated, async (req: any, res) => {
+  app.get('/api/sites/team', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const teamSites = await storage.getTeamSites(userId);
@@ -67,7 +55,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/sites', isAuthenticated, async (req: any, res) => {
+  app.post('/api/sites', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const siteData = insertSiteSchema.parse({ ...req.body, userId });
@@ -82,7 +70,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/sites/:id', isAuthenticated, async (req: any, res) => {
+  app.get('/api/sites/:id', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const site = await storage.getSite(req.params.id, userId);
@@ -96,7 +84,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/sites/:id', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/sites/:id', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const updates = req.body;
@@ -111,7 +99,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/sites/:id', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/sites/:id', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const success = await storage.deleteSite(req.params.id, userId);
@@ -126,7 +114,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Templates routes
-  app.get('/api/templates', isAuthenticated, async (req, res) => {
+  app.get('/api/templates', requireAuth, async (req, res) => {
     try {
       const templates = await storage.getTemplates();
       res.json(templates);
@@ -136,7 +124,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/templates', isAuthenticated, async (req, res) => {
+  app.post('/api/templates', requireAuth, async (req, res) => {
     try {
       const templateData = insertTemplateSchema.parse(req.body);
       const template = await storage.createTemplate(templateData);
@@ -151,7 +139,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Content library routes
-  app.get('/api/content', isAuthenticated, async (req: any, res) => {
+  app.get('/api/content', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const content = await storage.getUserContent(userId);
@@ -162,7 +150,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/content', isAuthenticated, async (req: any, res) => {
+  app.post('/api/content', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const contentData = insertContentItemSchema.parse({ ...req.body, userId });
@@ -178,7 +166,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Prospects routes
-  app.get('/api/prospects', isAuthenticated, async (req: any, res) => {
+  app.get('/api/prospects', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const prospects = await storage.getProspects(userId);
@@ -189,7 +177,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/prospects', isAuthenticated, async (req: any, res) => {
+  app.post('/api/prospects', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const prospectData = {
@@ -204,7 +192,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/prospects/:id', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/prospects/:id', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const prospectId = req.params.id;
@@ -219,7 +207,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/prospects/:id', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/prospects/:id', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const prospectId = req.params.id;
@@ -235,7 +223,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Files routes
-  app.get('/api/files', isAuthenticated, async (req: any, res) => {
+  app.get('/api/files', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const files = await storage.getUserFiles(userId);
@@ -246,7 +234,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/files', isAuthenticated, async (req: any, res) => {
+  app.post('/api/files', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const fileData = {
@@ -261,7 +249,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/files/:id', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/files/:id', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const fileId = req.params.id;
@@ -277,7 +265,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Analytics routes
-  app.get('/api/sites/:id/analytics', isAuthenticated, async (req: any, res) => {
+  app.get('/api/sites/:id/analytics', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const analytics = await storage.getSiteAnalytics(req.params.id, userId);

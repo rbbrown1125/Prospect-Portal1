@@ -10,7 +10,12 @@ import connectPg from "connect-pg-simple";
 
 declare global {
   namespace Express {
-    interface User extends User {}
+    interface User {
+      id: string;
+      email: string;
+      firstName?: string | null;
+      lastName?: string | null;
+    }
   }
 }
 
