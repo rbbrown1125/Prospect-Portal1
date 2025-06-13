@@ -119,11 +119,11 @@ export default function PublicSite() {
       case 'cover':
       case 'header':
         return (
-          <div className="text-center py-16 bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg">
-            <h1 className="text-4xl font-bold text-slate-900 mb-4">
+          <div className="text-center py-8 lg:py-16 bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg">
+            <h1 className="text-2xl lg:text-4xl font-bold text-slate-900 mb-4 px-4">
               {replaceVariables(section.title)}
             </h1>
-            <p className="text-xl text-slate-600 max-w-2xl mx-auto">
+            <p className="text-lg lg:text-xl text-slate-600 max-w-2xl mx-auto px-4">
               {replaceVariables(section.subtitle)}
             </p>
           </div>
@@ -161,18 +161,18 @@ export default function PublicSite() {
 
       case 'features':
         return (
-          <div className="py-12">
-            <h2 className="text-3xl font-bold text-slate-900 mb-8 text-center">
+          <div className="py-8 lg:py-12">
+            <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-6 lg:mb-8 text-center px-4">
               {replaceVariables(section.title)}
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
               {section.items?.map((item: string, index: number) => (
                 <Card key={index}>
-                  <CardContent className="p-6 text-center">
-                    <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-4">
-                      <FileText className="h-6 w-6 text-primary" />
+                  <CardContent className="p-4 lg:p-6 text-center">
+                    <div className="w-10 h-10 lg:w-12 lg:h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-3 lg:mb-4">
+                      <FileText className="h-5 w-5 lg:h-6 lg:w-6 text-primary" />
                     </div>
-                    <h3 className="font-semibold text-slate-900">
+                    <h3 className="font-semibold text-slate-900 text-sm lg:text-base">
                       {replaceVariables(item)}
                     </h3>
                   </CardContent>
@@ -182,15 +182,161 @@ export default function PublicSite() {
           </div>
         );
 
+      case 'file_section':
+      case 'file_gallery':
+      case 'media_files':
+      case 'deliverables':
+      case 'secure_files':
+        return (
+          <div className="py-8 lg:py-12">
+            <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-4 lg:mb-6 px-4">
+              {replaceVariables(section.title)}
+            </h2>
+            <p className="text-base lg:text-lg text-slate-600 mb-6 lg:mb-8 px-4">
+              {replaceVariables(section.content)}
+            </p>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+              {section.files?.map((file: any, index: number) => (
+                <Card key={index} className="p-4 lg:p-6">
+                  <div className="flex items-start space-x-3 lg:space-x-4">
+                    <div className="w-10 h-10 lg:w-12 lg:h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <FileText className="h-5 w-5 lg:h-6 lg:w-6 text-blue-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-slate-900 text-sm lg:text-base truncate">
+                        {replaceVariables(file.name)}
+                      </h3>
+                      <p className="text-xs lg:text-sm text-slate-600 mt-1">
+                        {replaceVariables(file.description)}
+                      </p>
+                      <div className="flex items-center space-x-2 mt-2">
+                        <span className="text-xs bg-slate-100 text-slate-700 px-2 py-1 rounded">
+                          {file.type}
+                        </span>
+                        <span className="text-xs text-slate-500">{file.size}</span>
+                        {file.security && (
+                          <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded">
+                            {file.security}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <Button size="sm" variant="outline" className="flex-shrink-0">
+                      <span className="hidden sm:inline">Download</span>
+                      <span className="sm:hidden">↓</span>
+                    </Button>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+        );
+
+      case 'file_categories':
+        return (
+          <div className="py-8 lg:py-12">
+            <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-4 lg:mb-6 px-4">
+              {replaceVariables(section.title)}
+            </h2>
+            <p className="text-base lg:text-lg text-slate-600 mb-6 lg:mb-8 px-4">
+              {replaceVariables(section.content)}
+            </p>
+            <div className="space-y-6 lg:space-y-8">
+              {section.categories?.map((category: any, categoryIndex: number) => (
+                <div key={categoryIndex}>
+                  <h3 className="text-lg lg:text-xl font-semibold text-slate-900 mb-3 lg:mb-4 px-4">
+                    {category.name}
+                  </h3>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
+                    {category.files?.map((file: any, fileIndex: number) => (
+                      <Card key={fileIndex} className="p-3 lg:p-4">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 lg:w-10 lg:h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <FileText className="h-4 w-4 lg:h-5 lg:w-5 text-green-600" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-medium text-slate-900 text-sm lg:text-base truncate">
+                              {replaceVariables(file.name)}
+                            </h4>
+                            <p className="text-xs lg:text-sm text-slate-600">
+                              {replaceVariables(file.description)}
+                            </p>
+                            <span className="text-xs bg-slate-100 text-slate-700 px-2 py-1 rounded mt-1 inline-block">
+                              {file.type}
+                            </span>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+      case 'overview':
+      case 'introduction':
+      case 'welcome':
+      case 'project_summary':
+      case 'package_info':
+      case 'security_notice':
+        return (
+          <div className="py-6 lg:py-8">
+            <h2 className="text-xl lg:text-2xl font-bold text-slate-900 mb-3 lg:mb-4 px-4">
+              {replaceVariables(section.title)}
+            </h2>
+            <div className="bg-slate-50 border-l-4 border-blue-400 p-4 lg:p-6 rounded-lg mx-4">
+              <p className="text-base lg:text-lg text-slate-700">
+                {replaceVariables(section.content)}
+              </p>
+            </div>
+          </div>
+        );
+
+      case 'security_header':
+        return (
+          <div className="text-center py-8 lg:py-16 bg-gradient-to-br from-red-50 to-orange-50 rounded-lg border border-red-200">
+            <div className="w-12 h-12 lg:w-16 lg:h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <FileText className="h-6 w-6 lg:h-8 lg:w-8 text-red-600" />
+            </div>
+            <h1 className="text-2xl lg:text-4xl font-bold text-slate-900 mb-4 px-4">
+              {replaceVariables(section.title)}
+            </h1>
+            <p className="text-lg lg:text-xl text-slate-600 max-w-2xl mx-auto px-4">
+              {replaceVariables(section.subtitle)}
+            </p>
+          </div>
+        );
+
+      case 'next_steps':
+      case 'warranty':
+      case 'usage_rights':
+      case 'technical_support':
+      case 'security_footer':
+      case 'support':
+        return (
+          <div className="py-6 lg:py-8">
+            <h2 className="text-xl lg:text-2xl font-bold text-slate-900 mb-3 lg:mb-4 px-4">
+              {replaceVariables(section.title)}
+            </h2>
+            <div className="bg-green-50 border-l-4 border-green-400 p-4 lg:p-6 rounded-lg mx-4">
+              <p className="text-base lg:text-lg text-slate-700">
+                {replaceVariables(section.content)}
+              </p>
+            </div>
+          </div>
+        );
+
       case 'pricing':
       case 'investment':
         return (
-          <div className="py-12">
-            <h2 className="text-3xl font-bold text-slate-900 mb-6 text-center">
+          <div className="py-8 lg:py-12">
+            <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-4 lg:mb-6 text-center px-4">
               {replaceVariables(section.title)}
             </h2>
-            <div className="bg-primary/5 border border-primary/20 p-8 rounded-lg text-center">
-              <p className="text-2xl font-bold text-primary mb-4">
+            <div className="bg-primary/5 border border-primary/20 p-6 lg:p-8 rounded-lg text-center mx-4">
+              <p className="text-xl lg:text-2xl font-bold text-primary mb-4">
                 {replaceVariables(section.content)}
               </p>
             </div>
@@ -200,11 +346,11 @@ export default function PublicSite() {
       case 'cta':
       case 'contact':
         return (
-          <div className="py-12 text-center">
-            <h2 className="text-3xl font-bold text-slate-900 mb-6">
+          <div className="py-8 lg:py-12 text-center">
+            <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-4 lg:mb-6 px-4">
               {replaceVariables(section.title)}
             </h2>
-            <p className="text-lg text-slate-600 mb-8">
+            <p className="text-base lg:text-lg text-slate-600 mb-6 lg:mb-8 px-4">
               {replaceVariables(section.content)}
             </p>
             <Button size="lg" className="bg-primary hover:bg-primary/90 text-white">
@@ -215,11 +361,11 @@ export default function PublicSite() {
 
       default:
         return (
-          <div className="py-8">
-            <h2 className="text-2xl font-bold text-slate-900 mb-4">
+          <div className="py-6 lg:py-8">
+            <h2 className="text-xl lg:text-2xl font-bold text-slate-900 mb-3 lg:mb-4 px-4">
               {replaceVariables(section.title)}
             </h2>
-            <p className="text-slate-700">
+            <p className="text-slate-700 px-4">
               {replaceVariables(section.content)}
             </p>
           </div>
@@ -230,14 +376,14 @@ export default function PublicSite() {
   // Authentication form
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Lock className="h-8 w-8 text-primary" />
+            <div className="w-12 h-12 lg:w-16 lg:h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Lock className="h-6 w-6 lg:h-8 lg:w-8 text-primary" />
             </div>
-            <CardTitle className="text-2xl">Protected Content</CardTitle>
-            <p className="text-slate-600">
+            <CardTitle className="text-xl lg:text-2xl">Protected Content</CardTitle>
+            <p className="text-slate-600 text-sm lg:text-base">
               This content is password protected. Please enter the password to continue.
             </p>
           </CardHeader>
@@ -289,21 +435,21 @@ export default function PublicSite() {
     <div className="min-h-screen bg-white">
       {/* Header */}
       <div className="border-b border-slate-200 bg-white/95 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
+        <div className="container mx-auto px-4 py-3 lg:py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2 lg:space-x-3 min-w-0 flex-1">
               {template && getTemplateIcon(template.category)}
-              <div>
-                <h1 className="font-semibold text-slate-900">{site.name}</h1>
-                <p className="text-sm text-slate-600">For {site.prospectName}</p>
+              <div className="min-w-0 flex-1">
+                <h1 className="font-semibold text-slate-900 text-sm lg:text-base truncate">{site.name}</h1>
+                <p className="text-xs lg:text-sm text-slate-600 truncate">For {site.prospectName}</p>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2 text-sm text-slate-600">
-                <Eye className="h-4 w-4" />
+            <div className="flex items-center space-x-2 lg:space-x-4 flex-shrink-0">
+              <div className="hidden sm:flex items-center space-x-2 text-xs lg:text-sm text-slate-600">
+                <Eye className="h-3 w-3 lg:h-4 lg:w-4" />
                 <span>{site.views || 0} views</span>
               </div>
-              <Badge variant="outline">
+              <Badge variant="outline" className="text-xs lg:text-sm">
                 {template?.category || 'Content'}
               </Badge>
             </div>
@@ -312,8 +458,8 @@ export default function PublicSite() {
       </div>
 
       {/* Site content */}
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <div className="space-y-8">
+      <div className="container mx-auto px-4 py-6 lg:py-8 max-w-4xl">
+        <div className="space-y-6 lg:space-y-8">
           {template?.content?.sections?.map((section: any, index: number) => (
             <div key={index}>
               {renderSection(section, site.customContent, site.prospectName, site.name)}
@@ -322,7 +468,7 @@ export default function PublicSite() {
         </div>
 
         {/* Footer */}
-        <div className="mt-16 py-8 border-t border-slate-200 text-center">
+        <div className="mt-12 lg:mt-16 py-6 lg:py-8 border-t border-slate-200 text-center">
           <p className="text-sm text-slate-500">
             This content was created specifically for {site.prospectName}
           </p>
