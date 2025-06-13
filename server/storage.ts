@@ -92,6 +92,37 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(sites).where(eq(sites.userId, userId)).orderBy(desc(sites.createdAt));
   }
 
+  async getMySites(userId: string): Promise<Site[]> {
+    return await db.select().from(sites).where(eq(sites.userId, userId)).orderBy(desc(sites.createdAt));
+  }
+
+  async getTeamSites(userId: string): Promise<any[]> {
+    // Get sites where user is not the owner but has access through sharing
+    const teamSites = await db
+      .select({
+        site: sites,
+        owner: {
+          id: users.id,
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+        }
+      })
+      .from(sites)
+      .innerJoin(users, eq(sites.userId, users.id))
+      .where(
+        and(
+          ne(sites.userId, userId),
+          // For now, we'll show all other users' sites as "team sites"
+          // Later this can be filtered by actual team membership
+          sql`true`
+        )
+      )
+      .orderBy(desc(sites.createdAt));
+    
+    return teamSites;
+  }
+
   async createSite(siteData: InsertSite): Promise<Site> {
     const [site] = await db.insert(sites).values(siteData).returning();
     return site;

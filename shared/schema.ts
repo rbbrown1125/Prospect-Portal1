@@ -12,6 +12,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { nanoid } from "nanoid";
 
 // Session storage table (required for Replit Auth)
 export const sessions = pgTable(
@@ -59,6 +60,9 @@ export const sites = pgTable("sites", {
   accessPassword: varchar("access_password"),
   views: integer("views").default(0),
   lastAccessed: timestamp("last_accessed"),
+  createdBy: varchar("created_by").references(() => users.id),
+  teamId: varchar("team_id"),
+  sharedWith: text("shared_with").array(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -126,6 +130,12 @@ export type ContentItem = typeof contentItems.$inferSelect;
 
 export type InsertSiteView = typeof siteViews.$inferInsert;
 export type SiteView = typeof siteViews.$inferSelect;
+
+export type InsertProspect = typeof prospects.$inferInsert;
+export type Prospect = typeof prospects.$inferSelect;
+
+export type InsertFile = typeof files.$inferInsert;
+export type File = typeof files.$inferSelect;
 
 // Insert schemas
 export const insertTemplateSchema = createInsertSchema(templates).omit({
