@@ -59,10 +59,17 @@ export default function SiteEdit() {
 
   const updateMutation = useMutation({
     mutationFn: async (updates: any) => {
-      return await apiRequest(`/api/sites/${params?.id}`, {
+      const response = await fetch(`/api/sites/${params?.id}`, {
         method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify(updates),
       });
+      if (!response.ok) {
+        throw new Error(`${response.status}: ${response.statusText}`);
+      }
+      return response.json();
     },
     onSuccess: () => {
       toast({
