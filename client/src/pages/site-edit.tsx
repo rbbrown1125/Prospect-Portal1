@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { ArrowLeft, Save, Eye, Edit3, Type, Image, FileText, Plus, Trash2, GripVertical } from 'lucide-react';
@@ -27,6 +28,8 @@ export default function SiteEdit() {
   const [customContent, setCustomContent] = useState('');
   const [templateSections, setTemplateSections] = useState<any[]>([]);
   const [editingSection, setEditingSection] = useState<any>(null);
+  const [draggedItem, setDraggedItem] = useState<number | null>(null);
+  const [draggedOver, setDraggedOver] = useState<number | null>(null);
 
   const { data: site, isLoading } = useQuery({
     queryKey: ['/api/sites', params?.id],
@@ -135,6 +138,45 @@ export default function SiteEdit() {
       id: Date.now().toString(),
     };
     setTemplateSections([...templateSections, newSection]);
+  };
+
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedItem(index);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    setDraggedOver(index);
+  };
+
+  const handleDragLeave = () => {
+    setDraggedOver(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+    
+    if (draggedItem === null) return;
+    
+    const newSections = [...templateSections];
+    const draggedSection = newSections[draggedItem];
+    
+    // Remove the dragged item
+    newSections.splice(draggedItem, 1);
+    
+    // Insert at the new position
+    const adjustedDropIndex = draggedItem < dropIndex ? dropIndex - 1 : dropIndex;
+    newSections.splice(adjustedDropIndex, 0, draggedSection);
+    
+    setTemplateSections(newSections);
+    setDraggedItem(null);
+    setDraggedOver(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedItem(null);
+    setDraggedOver(null);
   };
 
   const getSectionIcon = (type: string) => {
@@ -291,24 +333,65 @@ export default function SiteEdit() {
                       </p>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleSectionAdd('hero')}
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Section
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="sm">
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Section
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleSectionAdd('hero')}>
+                            <Type className="h-4 w-4 mr-2" />
+                            Hero Section
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleSectionAdd('file_section')}>
+                            <FileText className="h-4 w-4 mr-2" />
+                            File Section
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleSectionAdd('file_gallery')}>
+                            <FileText className="h-4 w-4 mr-2" />
+                            File Gallery
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleSectionAdd('overview')}>
+                            <Type className="h-4 w-4 mr-2" />
+                            Overview
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleSectionAdd('features')}>
+                            <Edit3 className="h-4 w-4 mr-2" />
+                            Features
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleSectionAdd('cta')}>
+                            <Type className="h-4 w-4 mr-2" />
+                            Call to Action
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
                       {templateSections.map((section, index) => (
-                        <Card key={section.id || index} className="border-2 border-dashed border-slate-200 hover:border-primary/50 transition-colors">
+                        <Card 
+                          key={section.id || index} 
+                          className={`border-2 border-dashed transition-all duration-200 cursor-move ${
+                            draggedItem === index 
+                              ? 'border-primary bg-primary/5 opacity-50' 
+                              : draggedOver === index 
+                              ? 'border-primary/70 bg-primary/10' 
+                              : 'border-slate-200 hover:border-primary/50'
+                          }`}
+                          draggable
+                          onDragStart={(e) => handleDragStart(e, index)}
+                          onDragOver={(e) => handleDragOver(e, index)}
+                          onDragLeave={handleDragLeave}
+                          onDrop={(e) => handleDrop(e, index)}
+                          onDragEnd={handleDragEnd}
+                        >
                           <CardContent className="p-4">
                             <div className="flex items-start justify-between mb-3">
                               <div className="flex items-center space-x-2">
-                                <GripVertical className="h-4 w-4 text-slate-400 cursor-move" />
+                                <GripVertical className="h-4 w-4 text-slate-400 cursor-grab active:cursor-grabbing" />
                                 {getSectionIcon(section.type)}
                                 <Badge variant="outline" className="text-xs">
                                   {section.type.replace('_', ' ')}
@@ -318,14 +401,20 @@ export default function SiteEdit() {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() => handleSectionEdit(section, index)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSectionEdit(section, index);
+                                  }}
                                 >
                                   <Edit3 className="h-4 w-4" />
                                 </Button>
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() => handleSectionDelete(index)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSectionDelete(index);
+                                  }}
                                   className="text-red-600 hover:text-red-700"
                                 >
                                   <Trash2 className="h-4 w-4" />
