@@ -579,13 +579,46 @@ export default function SiteEdit() {
                       </div>
                       <div>
                         <Label htmlFor="password">Access Password</Label>
-                        <Input
-                          id="password"
-                          type="password"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          placeholder="Enter access password"
-                        />
+                        <div className="flex gap-2">
+                          <Input
+                            id="password"
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="Enter access password for prospects"
+                            className="flex-1"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const generated = Math.random().toString(36).slice(2, 10);
+                              setPassword(generated);
+                            }}
+                          >
+                            Generate
+                          </Button>
+                          {password && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                navigator.clipboard.writeText(password);
+                                toast({
+                                  title: "Password copied",
+                                  description: "Password copied to clipboard",
+                                });
+                              }}
+                            >
+                              Copy
+                            </Button>
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-500 mt-1">
+                          This password will be required for prospects to view the site. Share this with your prospect securely.
+                        </p>
                       </div>
                     </div>
                   </CardContent>

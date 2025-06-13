@@ -376,47 +376,67 @@ export default function PublicSite() {
   // Authentication form
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="w-12 h-12 lg:w-16 lg:h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Lock className="h-6 w-6 lg:h-8 lg:w-8 text-primary" />
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          {/* ProspectShare Branding */}
+          <div className="text-center mb-8">
+            <div className="flex items-center justify-center space-x-3 mb-4">
+              <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
+                <Share2 className="text-white h-5 w-5" />
+              </div>
+              <span className="text-xl font-bold text-slate-900">ProspectShare</span>
             </div>
-            <CardTitle className="text-xl lg:text-2xl">Protected Content</CardTitle>
-            <p className="text-slate-600 text-sm lg:text-base">
-              This content is password protected. Please enter the password to continue.
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter password"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    authenticateMutation.mutate(password);
-                  }
-                }}
-              />
-            </div>
-            {authenticateMutation.isError && (
-              <p className="text-sm text-red-600">
-                Invalid password. Please try again.
+          </div>
+
+          <Card className="shadow-lg border-0">
+            <CardHeader className="text-center pb-6">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Lock className="h-8 w-8 text-primary" />
+              </div>
+              <CardTitle className="text-2xl mb-2">Secure Content Access</CardTitle>
+              <p className="text-slate-600">
+                This content has been created specifically for you and is password protected.
               </p>
-            )}
-            <Button 
-              className="w-full"
-              onClick={() => authenticateMutation.mutate(password)}
-              disabled={authenticateMutation.isPending || !password.trim()}
-            >
-              {authenticateMutation.isPending ? "Verifying..." : "Access Content"}
-            </Button>
-          </CardContent>
-        </Card>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-sm font-medium">Access Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter the password provided to you"
+                  className="h-12"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      authenticateMutation.mutate(password);
+                    }
+                  }}
+                />
+              </div>
+              {authenticateMutation.isError && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                  <p className="text-sm text-red-700">
+                    The password you entered is incorrect. Please check with your contact and try again.
+                  </p>
+                </div>
+              )}
+              <Button 
+                className="w-full h-12 text-base"
+                onClick={() => authenticateMutation.mutate(password)}
+                disabled={authenticateMutation.isPending || !password.trim()}
+              >
+                {authenticateMutation.isPending ? "Verifying Access..." : "Access Content"}
+              </Button>
+              <div className="text-center pt-4">
+                <p className="text-xs text-slate-500">
+                  Need help accessing this content? Contact your sales representative.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
