@@ -15,7 +15,7 @@ import {
   type InsertSiteView,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, count, sql } from "drizzle-orm";
+import { eq, desc, count, sql, and, ne, or } from "drizzle-orm";
 
 // Interface for storage operations
 export interface IStorage {
@@ -29,6 +29,8 @@ export interface IStorage {
   
   // Site operations
   getUserSites(userId: string): Promise<Site[]>;
+  getMySites(userId: string): Promise<Site[]>;
+  getTeamSites(userId: string): Promise<any[]>;
   createSite(siteData: InsertSite): Promise<Site>;
   getSite(siteId: string, userId: string): Promise<Site | undefined>;
   updateSite(siteId: string, userId: string, updates: Partial<Site>): Promise<Site | undefined>;
@@ -110,14 +112,7 @@ export class DatabaseStorage implements IStorage {
       })
       .from(sites)
       .innerJoin(users, eq(sites.userId, users.id))
-      .where(
-        and(
-          ne(sites.userId, userId),
-          // For now, we'll show all other users' sites as "team sites"
-          // Later this can be filtered by actual team membership
-          sql`true`
-        )
-      )
+      .where(ne(sites.userId, userId))
       .orderBy(desc(sites.createdAt));
     
     return teamSites;

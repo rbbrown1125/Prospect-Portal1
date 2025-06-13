@@ -8,17 +8,92 @@ import QuickActions from "@/components/quick-actions";
 import TemplatesSection from "@/components/templates-section";
 import CreateSiteModal from "@/components/create-site-modal";
 import { Button } from "@/components/ui/button";
-import { Plus, Menu } from "lucide-react";
-import { useSidebar } from "@/components/ui/sidebar";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Plus, Menu, Globe, User, ExternalLink, Eye, Calendar } from "lucide-react";
 
 export default function Dashboard() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [selectedKpi, setSelectedKpi] = useState<string | null>(null);
   const [, setLocation] = useLocation();
 
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['/api/dashboard/stats'],
   });
+
+  const { data: mySites, isLoading: mySitesLoading } = useQuery({
+    queryKey: ['/api/sites/my'],
+  });
+
+  const { data: teamSites, isLoading: teamSitesLoading } = useQuery({
+    queryKey: ['/api/sites/team'],
+  });
+
+  const handleKpiClick = (kpiType: string) => {
+    setSelectedKpi(kpiType);
+  };
+
+  const renderKpiDetails = (kpiType: string) => {
+    switch (kpiType) {
+      case 'active-sites':
+        return (
+          <div className="space-y-4">
+            <h3 className="font-semibold">Active Sites Breakdown</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <div className="text-2xl font-bold text-blue-600">{mySites?.length || 0}</div>
+                <div className="text-sm text-blue-800">My Sites</div>
+              </div>
+              <div className="bg-green-50 p-4 rounded-lg">
+                <div className="text-2xl font-bold text-green-600">{teamSites?.length || 0}</div>
+                <div className="text-sm text-green-800">Team Sites</div>
+              </div>
+            </div>
+          </div>
+        );
+      case 'total-views':
+        return (
+          <div className="space-y-4">
+            <h3 className="font-semibold">Views Analytics</h3>
+            <div className="text-sm text-slate-600">
+              Total page views across all your sites and team sites.
+            </div>
+            <Button onClick={() => setLocation('/analytics')} className="w-full">
+              View Detailed Analytics
+            </Button>
+          </div>
+        );
+      case 'active-prospects':
+        return (
+          <div className="space-y-4">
+            <h3 className="font-semibold">Prospect Engagement</h3>
+            <div className="text-sm text-slate-600">
+              Number of prospects actively engaging with your sites.
+            </div>
+            <Button onClick={() => setLocation('/prospects')} className="w-full">
+              Manage Prospects
+            </Button>
+          </div>
+        );
+      case 'conversion-rate':
+        return (
+          <div className="space-y-4">
+            <h3 className="font-semibold">Engagement Metrics</h3>
+            <div className="text-sm text-slate-600">
+              Rate at which prospects interact with your content.
+            </div>
+            <Button onClick={() => setLocation('/analytics')} className="w-full">
+              View Conversion Details
+            </Button>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className="flex h-screen bg-slate-50">

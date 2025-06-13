@@ -45,6 +45,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get('/api/sites/my', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const mySites = await storage.getMySites(userId);
+      res.json(mySites);
+    } catch (error) {
+      console.error("Error fetching my sites:", error);
+      res.status(500).json({ message: "Failed to fetch my sites" });
+    }
+  });
+
+  app.get('/api/sites/team', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const teamSites = await storage.getTeamSites(userId);
+      res.json(teamSites);
+    } catch (error) {
+      console.error("Error fetching team sites:", error);
+      res.status(500).json({ message: "Failed to fetch team sites" });
+    }
+  });
+
   app.post('/api/sites', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
