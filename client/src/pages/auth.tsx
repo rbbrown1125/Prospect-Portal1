@@ -10,7 +10,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Eye, EyeOff, Building2, Users, Shield, Zap } from "lucide-react";
+import { Eye, EyeOff, Users, Shield, Zap } from "lucide-react";
+import godlanLogo from "@assets/GODLAN_1749834603289.png";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address").endsWith("@godlan.com", "Only @godlan.com email addresses are allowed"),
@@ -77,17 +78,19 @@ export default function Auth() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
       <div className="container mx-auto px-4 py-8">
         <div className="grid lg:grid-cols-2 gap-8 items-center min-h-screen">
-          {/* Left side - Branding and Features */}
+          {/* Left side - Welcome Message and Logo */}
           <div className="space-y-8">
             <div className="text-center lg:text-left">
-              <div className="flex items-center justify-center lg:justify-start mb-6">
-                <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mr-3">
-                  <Building2 className="w-6 h-6 text-white" />
-                </div>
-                <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
-                  Godlan ProspectShare
-                </h1>
+              <div className="flex items-center justify-center lg:justify-start mb-8">
+                <img 
+                  src={godlanLogo} 
+                  alt="Godlan Logo" 
+                  className="h-16 w-auto object-contain"
+                />
               </div>
+              <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-6 leading-tight">
+                Welcome! Unlock Amazing with Infor CloudSuite Industrial!
+              </h1>
               <p className="text-xl text-slate-600 dark:text-slate-300 mb-8">
                 Create personalized, secure landing pages for your sales prospects with powerful file sharing capabilities.
               </p>
