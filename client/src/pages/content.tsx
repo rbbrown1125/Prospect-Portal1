@@ -134,12 +134,20 @@ export default function Content() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    let fileData = { ...formData };
+    let fileData: any = {};
     
     if (uploadMethod === 'file' && selectedFile) {
       try {
         const base64Data = await convertFileToBase64(selectedFile);
-        fileData.url = base64Data;
+        fileData = {
+          fileName: formData.name,
+          originalName: selectedFile.name,
+          fileSize: selectedFile.size,
+          mimeType: selectedFile.type,
+          filePath: base64Data,
+          category: formData.type,
+          description: formData.description,
+        };
       } catch (error) {
         toast({
           title: "Error",
@@ -148,6 +156,17 @@ export default function Content() {
         });
         return;
       }
+    } else {
+      // For URL uploads, map to expected schema
+      fileData = {
+        fileName: formData.name,
+        originalName: formData.name,
+        fileSize: formData.size,
+        mimeType: 'application/octet-stream',
+        filePath: formData.url,
+        category: formData.type,
+        description: formData.description,
+      };
     }
     
     createFileMutation.mutate(fileData);
@@ -178,14 +197,28 @@ export default function Content() {
 
   // Combine content and files data
   const allItems = [
-    ...(content || []).map((item: any) => ({ ...item, source: 'content' })),
-    ...(files || []).map((item: any) => ({ ...item, source: 'file' }))
+    ...(content || []).map((item: any) => ({ 
+      ...item, 
+      source: 'content',
+      displayName: item.name,
+      displaySize: item.fileSize,
+      displayType: item.type,
+      url: item.fileUrl
+    })),
+    ...(files || []).map((item: any) => ({ 
+      ...item, 
+      source: 'file',
+      displayName: item.fileName || item.originalName,
+      displaySize: item.fileSize,
+      displayType: item.category,
+      url: item.filePath
+    }))
   ];
 
   const filteredItems = allItems.filter((item: any) => {
-    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch = item.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          item.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = selectedType === 'all' || item.type === selectedType;
+    const matchesType = selectedType === 'all' || item.displayType === selectedType;
     return matchesSearch && matchesType;
   });
 
@@ -275,12 +308,12 @@ export default function Content() {
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center space-x-2">
-                        {getFileIcon(item.type)}
-                        <CardTitle className="text-sm truncate">{item.name}</CardTitle>
+                        {getFileIcon(item.displayType)}
+                        <CardTitle className="text-sm truncate">{item.displayName}</CardTitle>
                       </div>
                       <div className="flex items-center gap-2">
                         <Badge variant="outline" className="text-xs">
-                          {item.type}
+                          {item.displayType}
                         </Badge>
                         {item.source === 'file' && (
                           <Button
@@ -301,7 +334,7 @@ export default function Content() {
                         <p className="text-xs text-slate-600 line-clamp-2">{item.description}</p>
                       )}
                       <div className="text-xs text-slate-500">
-                        Size: {formatFileSize(item.fileSize || item.size || 0)}
+                        Size: {formatFileSize(item.displaySize || 0)}
                       </div>
                       <div className="text-xs text-slate-500 flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
