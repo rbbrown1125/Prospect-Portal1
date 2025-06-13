@@ -346,6 +346,24 @@ export default function SiteViewer() {
   const template = templates?.find((t: any) => t.id === site.templateId);
   const publicUrl = `${window.location.origin}/site/${site.id}`;
 
+  // Parse template content if it's a string
+  let templateContent = template?.content;
+  if (typeof templateContent === 'string') {
+    try {
+      templateContent = JSON.parse(templateContent);
+    } catch (e) {
+      console.error('Failed to parse template content:', e);
+      templateContent = null;
+    }
+  }
+
+  // Debug logging
+  console.log('Site data:', site);
+  console.log('Template data:', template);
+  console.log('Raw template content:', template?.content);
+  console.log('Parsed template content:', templateContent);
+  console.log('Template sections:', templateContent?.sections);
+
   return (
     <div className="min-h-screen bg-white">
       {/* Header with navigation */}
@@ -364,18 +382,18 @@ export default function SiteViewer() {
               <div className="flex items-center space-x-3">
                 {template && getTemplateIcon(template.category)}
                 <div>
-                  <h1 className="font-semibold text-slate-900">{site.name}</h1>
-                  <p className="text-sm text-slate-600">For {site.prospectName}</p>
+                  <h1 className="font-semibold text-slate-900">{site?.name || 'Site'}</h1>
+                  <p className="text-sm text-slate-600">For {site?.prospectName || 'Prospect'}</p>
                 </div>
               </div>
             </div>
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2 text-sm text-slate-600">
                 <Eye className="h-4 w-4" />
-                <span>{site.views || 0} views</span>
+                <span>{site?.views || 0} views</span>
               </div>
-              <Badge variant={site.isActive ? "default" : "secondary"}>
-                {site.isActive ? "Active" : "Draft"}
+              <Badge variant={site?.isActive ? "default" : "secondary"}>
+                {site?.isActive ? "Active" : "Draft"}
               </Badge>
               <Button 
                 size="sm" 
@@ -394,12 +412,40 @@ export default function SiteViewer() {
 
       {/* Site content */}
       <div className="container mx-auto px-4 py-8 max-w-4xl">
+        {/* Debug info */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="mb-8 p-4 bg-yellow-50 border border-yellow-200 rounded">
+            <h3 className="font-semibold mb-2">Debug Info:</h3>
+            <p>Template ID: {site?.templateId}</p>
+            <p>Template Found: {template ? 'Yes' : 'No'}</p>
+            <p>Has Content: {template?.content ? 'Yes' : 'No'}</p>
+            <p>Has Sections: {templateContent?.sections ? `Yes (${templateContent.sections.length})` : 'No'}</p>
+          </div>
+        )}
+        
         <div className="space-y-8">
-          {template?.content?.sections?.map((section: any, index: number) => (
-            <div key={index}>
-              {renderSection(section, site.customContent, site.prospectName)}
+          {templateContent?.sections ? (
+            templateContent.sections.map((section: any, index: number) => (
+              <div key={index}>
+                {renderSection(section, site?.customContent, site?.prospectName || 'Prospect')}
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-16">
+              <h2 className="text-xl font-semibold text-slate-900 mb-4">No Content Available</h2>
+              <p className="text-slate-600">
+                {!template ? 'Template not found' : 'Template has no sections to display'}
+              </p>
+              {template && (
+                <div className="mt-4 p-4 bg-slate-50 rounded text-left max-w-lg mx-auto">
+                  <h3 className="font-semibold mb-2">Template Data:</h3>
+                  <pre className="text-xs overflow-auto">
+                    {JSON.stringify(templateContent, null, 2)}
+                  </pre>
+                </div>
+              )}
             </div>
-          ))}
+          )}
         </div>
 
         {/* Site info */}

@@ -430,6 +430,17 @@ export default function PublicSite() {
   }
 
   const template = templates && Array.isArray(templates) ? templates.find((t: any) => t.id === site.templateId) : null;
+  
+  // Parse template content if it's a string
+  let templateContent = template?.content;
+  if (typeof templateContent === 'string') {
+    try {
+      templateContent = JSON.parse(templateContent);
+    } catch (e) {
+      console.error('Failed to parse template content:', e);
+      templateContent = null;
+    }
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -460,7 +471,7 @@ export default function PublicSite() {
       {/* Site content */}
       <div className="container mx-auto px-4 py-6 lg:py-8 max-w-4xl">
         <div className="space-y-6 lg:space-y-8">
-          {template?.content?.sections?.map((section: any, index: number) => (
+          {templateContent?.sections?.map((section: any, index: number) => (
             <div key={index}>
               {renderSection(section, site.customContent, site.prospectName, site.name)}
             </div>

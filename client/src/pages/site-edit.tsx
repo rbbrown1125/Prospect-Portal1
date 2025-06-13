@@ -54,8 +54,20 @@ export default function SiteEdit() {
   useEffect(() => {
     if (templates && site) {
       const template = templates.find((t: any) => t.id === site.templateId);
-      if (template?.content?.sections) {
-        setTemplateSections([...template.content.sections]);
+      if (template?.content) {
+        let templateContent = template.content;
+        // Parse template content if it's a string
+        if (typeof templateContent === 'string') {
+          try {
+            templateContent = JSON.parse(templateContent);
+          } catch (e) {
+            console.error('Failed to parse template content:', e);
+            templateContent = null;
+          }
+        }
+        if (templateContent?.sections) {
+          setTemplateSections([...templateContent.sections]);
+        }
       }
     }
   }, [templates, site]);
