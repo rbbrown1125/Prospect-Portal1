@@ -24,6 +24,8 @@ export default function Content() {
     url: '',
     size: 0
   });
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadMethod, setUploadMethod] = useState<'url' | 'file'>('file');
   const { toast } = useToast();
 
   const { data: content, isLoading } = useQuery({
@@ -48,6 +50,8 @@ export default function Content() {
       queryClient.invalidateQueries({ queryKey: ['/api/files'] });
       setShowUploadModal(false);
       setFormData({ name: '', description: '', type: 'document', url: '', size: 0 });
+      setSelectedFile(null);
+      setUploadMethod('file');
       toast({
         title: "Success",
         description: "File uploaded successfully",
@@ -86,9 +90,55 @@ export default function Content() {
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      setFormData(prev => ({
+        ...prev,
+        name: file.name,
+        size: file.size,
+        type: getFileTypeFromMimeType(file.type)
+      }));
+    }
+  };
+
+  const getFileTypeFromMimeType = (mimeType: string): string => {
+    if (mimeType.startsWith('image/')) return 'image';
+    if (mimeType.startsWith('video/')) return 'video';
+    if (mimeType.startsWith('audio/')) return 'audio';
+    return 'document';
+  };
+
+  const convertFileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = error => reject(error);
+    });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    createFileMutation.mutate(formData);
+    
+    let fileData = { ...formData };
+    
+    if (uploadMethod === 'file' && selectedFile) {
+      try {
+        const base64Data = await convertFileToBase64(selectedFile);
+        fileData.url = base64Data;
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to process file",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    
+    createFileMutation.mutate(fileData);
   };
 
   const getFileIcon = (type: string) => {
@@ -126,6 +176,23 @@ export default function Content() {
     const matchesType = selectedType === 'all' || item.type === selectedType;
     return matchesSearch && matchesType;
   });
+
+  const handleFileDownload = (item: any) => {
+    if (item.url) {
+      if (item.url.startsWith('data:')) {
+        // Handle base64 encoded files
+        const link = document.createElement('a');
+        link.href = item.url;
+        link.download = item.name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        // Handle external URLs
+        window.open(item.url, '_blank');
+      }
+    }
+  };
 
   return (
     <div className="flex h-screen bg-slate-50">
@@ -234,10 +301,10 @@ export default function Content() {
                             size="sm" 
                             variant="outline" 
                             className="flex-1 text-xs"
-                            onClick={() => window.open(item.url, '_blank')}
+                            onClick={() => handleFileDownload(item)}
                           >
                             <Download className="h-3 w-3 mr-1" />
-                            {item.source === 'file' ? 'Open' : 'Download'}
+                            {item.url.startsWith('data:') ? 'Download' : 'Open'}
                           </Button>
                         )}
                       </div>
@@ -271,6 +338,57 @@ export default function Content() {
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
+                <Label>Upload Method</Label>
+                <Select
+                  value={uploadMethod}
+                  onValueChange={(value: 'url' | 'file') => setUploadMethod(value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="file">Upload Local File</SelectItem>
+                    <SelectItem value="url">Link External URL</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {uploadMethod === 'file' ? (
+                <div>
+                  <Label htmlFor="file-upload">Select File *</Label>
+                  <Input
+                    id="file-upload"
+                    type="file"
+                    onChange={handleFileSelect}
+                    accept="*/*"
+                    required
+                    className="cursor-pointer"
+                  />
+                  {selectedFile && (
+                    <div className="mt-2 p-2 bg-slate-50 rounded text-sm">
+                      <div className="flex items-center gap-2">
+                        {getFileIcon(getFileTypeFromMimeType(selectedFile.type))}
+                        <span>{selectedFile.name}</span>
+                        <span className="text-slate-500">({formatFileSize(selectedFile.size)})</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div>
+                  <Label htmlFor="url">File URL *</Label>
+                  <Input
+                    id="url"
+                    type="url"
+                    value={formData.url}
+                    onChange={(e) => setFormData({ ...formData, url: e.target.value })}
+                    placeholder="https://example.com/file.pdf"
+                    required
+                  />
+                </div>
+              )}
+
+              <div>
                 <Label htmlFor="name">File Name *</Label>
                 <Input
                   id="name"
@@ -296,28 +414,6 @@ export default function Content() {
                     <SelectItem value="audio">Audio</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-              
-              <div>
-                <Label htmlFor="url">File URL *</Label>
-                <Input
-                  id="url"
-                  type="url"
-                  value={formData.url}
-                  onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-                  placeholder="https://example.com/file.pdf"
-                  required
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="size">File Size (bytes)</Label>
-                <Input
-                  id="size"
-                  type="number"
-                  value={formData.size}
-                  onChange={(e) => setFormData({ ...formData, size: parseInt(e.target.value) || 0 })}
-                />
               </div>
               
               <div>
