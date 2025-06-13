@@ -5,9 +5,10 @@ import { useLocation } from "wouter";
 interface StatsGridProps {
   stats?: any;
   isLoading: boolean;
+  onKpiClick?: (kpiType: string) => void;
 }
 
-export default function StatsGrid({ stats, isLoading }: StatsGridProps) {
+export default function StatsGrid({ stats, isLoading, onKpiClick }: StatsGridProps) {
   const [, setLocation] = useLocation();
 
   if (isLoading) {
@@ -44,7 +45,7 @@ export default function StatsGrid({ stats, isLoading }: StatsGridProps) {
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
       <Card 
         className="cursor-pointer hover:shadow-lg transition-shadow"
-        onClick={() => setLocation('/sites')}
+        onClick={() => onKpiClick ? onKpiClick('active-sites') : setLocation('/sites')}
       >
         <CardContent className="p-4 lg:p-6">
           <div className="flex items-center justify-between">
@@ -67,7 +68,7 @@ export default function StatsGrid({ stats, isLoading }: StatsGridProps) {
 
       <Card 
         className="cursor-pointer hover:shadow-lg transition-shadow"
-        onClick={() => setLocation('/analytics')}
+        onClick={() => onKpiClick ? onKpiClick('total-views') : setLocation('/analytics')}
       >
         <CardContent className="p-4 lg:p-6">
           <div className="flex items-center justify-between">
@@ -90,7 +91,7 @@ export default function StatsGrid({ stats, isLoading }: StatsGridProps) {
 
       <Card 
         className="cursor-pointer hover:shadow-lg transition-shadow"
-        onClick={() => setLocation('/prospects')}
+        onClick={() => onKpiClick ? onKpiClick('active-prospects') : setLocation('/prospects')}
       >
         <CardContent className="p-4 lg:p-6">
           <div className="flex items-center justify-between">
@@ -113,7 +114,7 @@ export default function StatsGrid({ stats, isLoading }: StatsGridProps) {
 
       <Card 
         className="cursor-pointer hover:shadow-lg transition-shadow"
-        onClick={() => setLocation('/analytics')}
+        onClick={() => onKpiClick ? onKpiClick('conversion-rate') : setLocation('/analytics')}
       >
         <CardContent className="p-4 lg:p-6">
           <div className="flex items-center justify-between">

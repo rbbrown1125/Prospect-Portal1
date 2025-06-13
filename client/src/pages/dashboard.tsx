@@ -147,18 +147,116 @@ export default function Dashboard() {
 
         <div className="flex-1 overflow-auto">
           <div className="p-4 lg:p-6 space-y-4 lg:space-y-6">
-            <StatsGrid stats={stats} isLoading={statsLoading} />
+            <StatsGrid stats={stats} isLoading={statsLoading} onKpiClick={handleKpiClick} />
             
+            {/* Sites Overview */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Globe className="h-5 w-5" />
+                  Sites Overview
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Tabs defaultValue="my-sites" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="my-sites">
+                      My Sites ({mySites?.length || 0})
+                    </TabsTrigger>
+                    <TabsTrigger value="team-sites">
+                      Team Sites ({teamSites?.length || 0})
+                    </TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="my-sites" className="space-y-4">
+                    {mySitesLoading ? (
+                      <div className="text-center py-8 text-slate-500">Loading your sites...</div>
+                    ) : mySites && mySites.length > 0 ? (
+                      <div className="grid gap-4">
+                        {mySites.slice(0, 5).map((site: any) => (
+                          <div key={site.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-slate-50">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3">
+                                <h3 className="font-medium">{site.name}</h3>
+                                <Badge variant={site.isActive ? "default" : "secondary"}>
+                                  {site.isActive ? "Active" : "Inactive"}
+                                </Badge>
+                              </div>
+                              <div className="text-sm text-slate-600 mt-1">
+                                For {site.prospectName} • {site.views || 0} views
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Button variant="outline" size="sm" onClick={() => setLocation(`/sites/${site.id}`)}>
+                                Edit
+                              </Button>
+                              <Button variant="outline" size="sm" onClick={() => setLocation(`/sites/${site.id}/preview`)}>
+                                <ExternalLink className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <Globe className="h-12 w-12 text-slate-300 mx-auto mb-4" />
+                        <p className="text-slate-600">No sites created yet</p>
+                        <Button className="mt-4" onClick={() => setIsCreateModalOpen(true)}>
+                          Create Your First Site
+                        </Button>
+                      </div>
+                    )}
+                  </TabsContent>
+                  
+                  <TabsContent value="team-sites" className="space-y-4">
+                    {teamSitesLoading ? (
+                      <div className="text-center py-8 text-slate-500">Loading team sites...</div>
+                    ) : teamSites && teamSites.length > 0 ? (
+                      <div className="grid gap-4">
+                        {teamSites.slice(0, 5).map((item: any) => (
+                          <div key={item.site.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-slate-50">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3">
+                                <h3 className="font-medium">{item.site.name}</h3>
+                                <Badge variant={item.site.isActive ? "default" : "secondary"}>
+                                  {item.site.isActive ? "Active" : "Inactive"}
+                                </Badge>
+                              </div>
+                              <div className="text-sm text-slate-600 mt-1">
+                                <div className="flex items-center gap-2">
+                                  <User className="h-3 w-3" />
+                                  Created by {item.owner?.firstName || item.owner?.email || 'Unknown'}
+                                </div>
+                                <div>For {item.site.prospectName} • {item.site.views || 0} views</div>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Button variant="outline" size="sm" onClick={() => setLocation(`/sites/${item.site.id}/preview`)}>
+                                <ExternalLink className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <User className="h-12 w-12 text-slate-300 mx-auto mb-4" />
+                        <p className="text-slate-600">No team sites available</p>
+                      </div>
+                    )}
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+            </Card>
+
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
               <div className="lg:col-span-2">
-                <RecentSites />
+                <TemplatesSection onSelectTemplate={() => setIsCreateModalOpen(true)} />
               </div>
               <div>
                 <QuickActions onCreateSite={() => setIsCreateModalOpen(true)} />
               </div>
             </div>
-
-            <TemplatesSection onSelectTemplate={() => setIsCreateModalOpen(true)} />
           </div>
         </div>
       </main>
@@ -167,6 +265,15 @@ export default function Dashboard() {
         isOpen={isCreateModalOpen} 
         onClose={() => setIsCreateModalOpen(false)} 
       />
+
+      <Dialog open={!!selectedKpi} onOpenChange={() => setSelectedKpi(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Analytics Details</DialogTitle>
+          </DialogHeader>
+          {selectedKpi && renderKpiDetails(selectedKpi)}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
