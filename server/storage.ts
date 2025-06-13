@@ -26,9 +26,10 @@ import { eq, desc, count, sql, and, ne, or } from "drizzle-orm";
 // Interface for storage operations
 export interface IStorage {
   // User operations
-  // (IMPORTANT) these user operations are mandatory for Replit Auth.
   getUser(id: string): Promise<User | undefined>;
-  upsertUser(user: UpsertUser): Promise<User>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
+  updateUserLastLogin(userId: string): Promise<void>;
   
   // Dashboard operations
   getDashboardStats(userId: string): Promise<any>;
