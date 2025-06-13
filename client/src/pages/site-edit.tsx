@@ -30,6 +30,10 @@ export default function SiteEdit() {
   const [editingSection, setEditingSection] = useState<any>(null);
   const [draggedItem, setDraggedItem] = useState<number | null>(null);
   const [draggedOver, setDraggedOver] = useState<number | null>(null);
+  const [showSaveAsTemplate, setShowSaveAsTemplate] = useState(false);
+  const [templateName, setTemplateName] = useState('');
+  const [templateDescription, setTemplateDescription] = useState('');
+  const [templateCategory, setTemplateCategory] = useState('Custom');
 
   const { data: site, isLoading } = useQuery({
     queryKey: ['/api/sites', params?.id],
