@@ -155,21 +155,44 @@ export default function SiteEdit() {
   const handleDragStart = (e: React.DragEvent, index: number) => {
     setDraggedItem(index);
     e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', index.toString());
   };
 
   const handleDragOver = (e: React.DragEvent, index: number) => {
     e.preventDefault();
-    setDraggedOver(index);
+    e.dataTransfer.dropEffect = 'move';
+    if (draggedItem !== index) {
+      setDraggedOver(index);
+    }
   };
 
-  const handleDragLeave = () => {
-    setDraggedOver(null);
+  const handleDragEnter = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedItem !== index) {
+      setDraggedOver(index);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    // Only clear if we're leaving the container, not entering a child
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const x = e.clientX;
+    const y = e.clientY;
+    
+    if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
+      setDraggedOver(null);
+    }
   };
 
   const handleDrop = (e: React.DragEvent, dropIndex: number) => {
     e.preventDefault();
     
-    if (draggedItem === null) return;
+    if (draggedItem === null || draggedItem === dropIndex) {
+      setDraggedItem(null);
+      setDraggedOver(null);
+      return;
+    }
     
     const newSections = [...templateSections];
     const draggedSection = newSections[draggedItem];
