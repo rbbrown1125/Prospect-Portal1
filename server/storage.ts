@@ -4,6 +4,8 @@ import {
   templates,
   contentItems,
   siteViews,
+  prospects,
+  files,
   type User,
   type UpsertUser,
   type Site,
@@ -13,6 +15,10 @@ import {
   type ContentItem,
   type InsertContentItem,
   type InsertSiteView,
+  type Prospect,
+  type InsertProspect,
+  type File,
+  type InsertFile,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, count, sql, and, ne, or } from "drizzle-orm";
@@ -45,6 +51,17 @@ export interface IStorage {
   // Content operations
   getUserContent(userId: string): Promise<ContentItem[]>;
   createContentItem(contentData: InsertContentItem): Promise<ContentItem>;
+  
+  // Prospects operations
+  getProspects(userId: string): Promise<Prospect[]>;
+  createProspect(prospectData: InsertProspect): Promise<Prospect>;
+  updateProspect(prospectId: string, userId: string, updates: Partial<Prospect>): Promise<Prospect | undefined>;
+  deleteProspect(prospectId: string, userId: string): Promise<boolean>;
+  
+  // File operations
+  getUserFiles(userId: string): Promise<File[]>;
+  createFile(fileData: InsertFile): Promise<File>;
+  deleteFile(fileId: string, userId: string): Promise<boolean>;
   
   // Analytics operations
   getSiteAnalytics(siteId: string, userId: string): Promise<any>;
@@ -208,6 +225,49 @@ export class DatabaseStorage implements IStorage {
         })
         .where(eq(sites.id, viewData.siteId));
     }
+  }
+
+  // Prospects operations
+  async getProspects(userId: string): Promise<Prospect[]> {
+    return await db.select().from(prospects).where(eq(prospects.userId, userId)).orderBy(desc(prospects.createdAt));
+  }
+
+  async createProspect(prospectData: InsertProspect): Promise<Prospect> {
+    const [prospect] = await db.insert(prospects).values(prospectData).returning();
+    return prospect;
+  }
+
+  async updateProspect(prospectId: string, userId: string, updates: Partial<Prospect>): Promise<Prospect | undefined> {
+    const [prospect] = await db
+      .update(prospects)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(and(eq(prospects.id, prospectId), eq(prospects.userId, userId)))
+      .returning();
+    return prospect;
+  }
+
+  async deleteProspect(prospectId: string, userId: string): Promise<boolean> {
+    const result = await db
+      .delete(prospects)
+      .where(and(eq(prospects.id, prospectId), eq(prospects.userId, userId)));
+    return (result.rowCount || 0) > 0;
+  }
+
+  // File operations
+  async getUserFiles(userId: string): Promise<File[]> {
+    return await db.select().from(files).where(eq(files.userId, userId)).orderBy(desc(files.createdAt));
+  }
+
+  async createFile(fileData: InsertFile): Promise<File> {
+    const [file] = await db.insert(files).values(fileData).returning();
+    return file;
+  }
+
+  async deleteFile(fileId: string, userId: string): Promise<boolean> {
+    const result = await db
+      .delete(files)
+      .where(and(eq(files.id, fileId), eq(files.userId, userId)));
+    return result.rowCount > 0;
   }
 }
 

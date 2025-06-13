@@ -177,6 +177,105 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Prospects routes
+  app.get('/api/prospects', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const prospects = await storage.getProspects(userId);
+      res.json(prospects);
+    } catch (error) {
+      console.error("Error fetching prospects:", error);
+      res.status(500).json({ message: "Failed to fetch prospects" });
+    }
+  });
+
+  app.post('/api/prospects', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const prospectData = {
+        ...req.body,
+        userId,
+      };
+      const prospect = await storage.createProspect(prospectData);
+      res.json(prospect);
+    } catch (error) {
+      console.error("Error creating prospect:", error);
+      res.status(500).json({ message: "Failed to create prospect" });
+    }
+  });
+
+  app.patch('/api/prospects/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const prospectId = req.params.id;
+      const prospect = await storage.updateProspect(prospectId, userId, req.body);
+      if (!prospect) {
+        return res.status(404).json({ message: "Prospect not found" });
+      }
+      res.json(prospect);
+    } catch (error) {
+      console.error("Error updating prospect:", error);
+      res.status(500).json({ message: "Failed to update prospect" });
+    }
+  });
+
+  app.delete('/api/prospects/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const prospectId = req.params.id;
+      const deleted = await storage.deleteProspect(prospectId, userId);
+      if (!deleted) {
+        return res.status(404).json({ message: "Prospect not found" });
+      }
+      res.json({ message: "Prospect deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting prospect:", error);
+      res.status(500).json({ message: "Failed to delete prospect" });
+    }
+  });
+
+  // Files routes
+  app.get('/api/files', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const files = await storage.getUserFiles(userId);
+      res.json(files);
+    } catch (error) {
+      console.error("Error fetching files:", error);
+      res.status(500).json({ message: "Failed to fetch files" });
+    }
+  });
+
+  app.post('/api/files', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const fileData = {
+        ...req.body,
+        userId,
+      };
+      const file = await storage.createFile(fileData);
+      res.json(file);
+    } catch (error) {
+      console.error("Error creating file:", error);
+      res.status(500).json({ message: "Failed to create file" });
+    }
+  });
+
+  app.delete('/api/files/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const fileId = req.params.id;
+      const deleted = await storage.deleteFile(fileId, userId);
+      if (!deleted) {
+        return res.status(404).json({ message: "File not found" });
+      }
+      res.json({ message: "File deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting file:", error);
+      res.status(500).json({ message: "Failed to delete file" });
+    }
+  });
+
   // Analytics routes
   app.get('/api/sites/:id/analytics', isAuthenticated, async (req: any, res) => {
     try {
