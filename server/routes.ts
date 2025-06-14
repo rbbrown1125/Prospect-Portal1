@@ -406,6 +406,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Activity logging routes (for admin users)
+  app.get('/api/activity', requireAuth, async (req: any, res) => {
+    try {
+      const activities = await storage.getActivityLog();
+      res.json(activities);
+    } catch (error) {
+      console.error("Error fetching activity log:", error);
+      res.status(500).json({ message: "Failed to fetch activity log" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

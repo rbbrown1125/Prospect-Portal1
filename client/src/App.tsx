@@ -12,6 +12,7 @@ import Templates from "@/pages/templates";
 import Content from "@/pages/content";
 import Analytics from "@/pages/analytics";
 import Prospects from "@/pages/prospects";
+import ActivityPage from "@/pages/activity";
 import TemplatePreview from "@/pages/template-preview";
 import SiteViewer from "@/pages/site-viewer";
 import PublicSite from "@/pages/public-site";
@@ -48,6 +49,7 @@ function Router() {
           <Route path="/content" component={Content} />
           <Route path="/analytics" component={Analytics} />
           <Route path="/prospects" component={Prospects} />
+          <Route path="/activity" component={ActivityPage} />
         </>
       )}
       <Route component={NotFound} />

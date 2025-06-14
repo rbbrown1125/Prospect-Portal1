@@ -266,6 +266,21 @@ export class DatabaseStorage implements IStorage {
 
   async createProspect(prospectData: InsertProspect): Promise<Prospect> {
     const [prospect] = await db.insert(prospects).values(prospectData).returning();
+    
+    // Log the activity
+    await this.logActivity({
+      userId: prospectData.userId,
+      activityType: 'prospect_added',
+      description: `Added prospect "${prospect.name}" (${prospect.email})`,
+      entityId: prospect.id,
+      entityType: 'prospect',
+      metadata: {
+        prospectName: prospect.name,
+        prospectEmail: prospect.email,
+        company: prospect.company,
+      },
+    });
+    
     return prospect;
   }
 
