@@ -1,5 +1,5 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useParams } from "wouter";
+import { useRoute } from "wouter";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,10 +10,29 @@ import { FileText, Presentation, BarChart3, Lock, Eye, Share2 } from "lucide-rea
 import { apiRequest } from "@/lib/queryClient";
 
 export default function PublicSite() {
-  const { id } = useParams();
+  const [match, params] = useRoute('/site/:id');
+  const id = params?.id;
   const [password, setPassword] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [site, setSite] = useState<any>(null);
+
+  // Debug logging
+  console.log("PublicSite component loaded", { match, params, id });
+
+  if (!match || !id) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>Site Not Found</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>The requested site could not be found.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const authenticateMutation = useMutation({
     mutationFn: async (password: string) => {
