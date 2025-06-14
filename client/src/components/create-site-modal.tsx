@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { FileText, Presentation, BarChart3, X } from "lucide-react";
+import { FileText, Presentation, BarChart3, X, CheckCircle, ExternalLink, Copy } from "lucide-react";
 
 interface CreateSiteModalProps {
   isOpen: boolean;
@@ -26,6 +26,8 @@ export default function CreateSiteModal({ isOpen, onClose, preSelectedTemplateId
   const [prospectEmail, setProspectEmail] = useState("");
   const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(preSelectedTemplateId || null);
   const [accessPassword, setAccessPassword] = useState("");
+  const [createdSite, setCreatedSite] = useState<any>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -43,16 +45,29 @@ export default function CreateSiteModal({ isOpen, onClose, preSelectedTemplateId
 
   const createSiteMutation = useMutation({
     mutationFn: async (siteData: any) => {
-      return await apiRequest("POST", "/api/sites", siteData);
+      const response = await apiRequest("POST", "/api/sites", siteData);
+      return response.json();
     },
-    onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Site created successfully!",
+    onSuccess: (data) => {
+      setCreatedSite(data);
+      setShowSuccess(true);
+      
+      // Generate public URL and copy to clipboard
+      const publicUrl = `${window.location.origin}/site/${data.id}`;
+      navigator.clipboard.writeText(publicUrl).then(() => {
+        toast({
+          title: "Site Created Successfully!",
+          description: "Public URL has been copied to your clipboard",
+        });
+      }).catch(() => {
+        toast({
+          title: "Site Created Successfully!",
+          description: "Site created but failed to copy URL to clipboard",
+        });
       });
+      
       queryClient.invalidateQueries({ queryKey: ['/api/sites'] });
       queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
-      handleClose();
     },
     onError: (error) => {
       toast({
@@ -91,7 +106,25 @@ export default function CreateSiteModal({ isOpen, onClose, preSelectedTemplateId
     setProspectEmail("");
     setSelectedTemplateId(preSelectedTemplateId || null);
     setAccessPassword("");
+    setCreatedSite(null);
+    setShowSuccess(false);
     onClose();
+  };
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast({
+        title: "Copied!",
+        description: "URL copied to clipboard",
+      });
+    } catch (err) {
+      toast({
+        title: "Failed to copy",
+        description: "Please copy the URL manually",
+        variant: "destructive",
+      });
+    }
   };
 
   const getTemplateIcon = (category: string) => {
@@ -108,6 +141,96 @@ export default function CreateSiteModal({ isOpen, onClose, preSelectedTemplateId
         return <FileText className="h-5 w-5 text-slate-600" />;
     }
   };
+
+  if (showSuccess && createdSite) {
+    const publicUrl = `${window.location.origin}/site/${createdSite.id}`;
+    
+    return (
+      <Dialog open={isOpen} onOpenChange={handleClose}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="h-5 w-5 text-green-600" />
+                <span>Site Created Successfully!</span>
+              </div>
+              <Button variant="ghost" size="sm" onClick={handleClose}>
+                <X className="h-4 w-4" />
+              </Button>
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            <div className="text-center">
+              <div className="text-lg font-medium text-slate-900 mb-2">
+                {createdSite.name}
+              </div>
+              <div className="text-sm text-slate-600">
+                Created for {createdSite.prospectName}
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <Label className="text-sm font-medium text-slate-700">Public URL</Label>
+                <div className="flex items-center space-x-2 mt-1">
+                  <Input
+                    value={publicUrl}
+                    readOnly
+                    className="flex-1 bg-slate-50"
+                  />
+                  <Button
+                    size="sm"
+                    onClick={() => copyToClipboard(publicUrl)}
+                    className="shrink-0"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              {createdSite.accessPassword && (
+                <div>
+                  <Label className="text-sm font-medium text-slate-700">Access Password</Label>
+                  <div className="flex items-center space-x-2 mt-1">
+                    <Input
+                      value={createdSite.accessPassword}
+                      readOnly
+                      className="flex-1 bg-slate-50"
+                    />
+                    <Button
+                      size="sm"
+                      onClick={() => copyToClipboard(createdSite.accessPassword)}
+                      className="shrink-0"
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-between space-x-4">
+              <Button
+                variant="outline"
+                onClick={() => window.open(publicUrl, '_blank')}
+                className="flex-1"
+              >
+                <ExternalLink className="h-4 w-4 mr-2" />
+                View Site
+              </Button>
+              <Button
+                onClick={handleClose}
+                className="flex-1"
+              >
+                Create Another Site
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
