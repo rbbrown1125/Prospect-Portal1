@@ -153,6 +153,22 @@ export class DatabaseStorage implements IStorage {
 
   async createSite(siteData: InsertSite): Promise<Site> {
     const [site] = await db.insert(sites).values(siteData).returning();
+    
+    // Log the activity
+    await this.logActivity({
+      userId: siteData.userId,
+      activityType: 'site_created',
+      description: `Created site "${site.name}" for prospect ${site.prospectName}`,
+      entityId: site.id,
+      entityType: 'site',
+      metadata: {
+        siteName: site.name,
+        prospectName: site.prospectName,
+        prospectEmail: site.prospectEmail,
+        templateId: site.templateId,
+      },
+    });
+    
     return site;
   }
 
