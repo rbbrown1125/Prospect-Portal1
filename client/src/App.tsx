@@ -30,11 +30,13 @@ function Router() {
 
   return (
     <Switch>
+      {/* Public routes that work regardless of authentication */}
+      <Route path="/site/:id" component={PublicSite} />
+      <Route path="/preview/template/:id" component={TemplatePreview} />
+      
       {!isAuthenticated ? (
         <>
           <Route path="/" component={Auth} />
-          <Route path="/preview/template/:id" component={TemplatePreview} />
-          <Route path="/site/:id" component={PublicSite} />
         </>
       ) : (
         <>
@@ -46,8 +48,6 @@ function Router() {
           <Route path="/content" component={Content} />
           <Route path="/analytics" component={Analytics} />
           <Route path="/prospects" component={Prospects} />
-          <Route path="/preview/template/:id" component={TemplatePreview} />
-          <Route path="/site/:id" component={PublicSite} />
         </>
       )}
       <Route component={NotFound} />

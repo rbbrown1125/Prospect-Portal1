@@ -34,6 +34,25 @@ export default function PublicSite() {
     );
   }
 
+  // Load initial site info
+  const { data: siteInfo, isLoading: isLoadingSiteInfo } = useQuery({
+    queryKey: [`/api/public/sites/${id}`],
+    enabled: !!id,
+  });
+
+  // Auto-load full site content if no password required
+  const { data: fullSite, isLoading: isLoadingFullSite } = useQuery({
+    queryKey: [`/site/${id}`],
+    enabled: !!id && !!siteInfo && !(siteInfo as any).requiresPassword,
+  });
+  
+  // Handle auto-loading of site content when no password is required
+  if (fullSite && !isAuthenticated && !(siteInfo as any).requiresPassword) {
+    setSite(fullSite);
+    setIsAuthenticated(true);
+    recordViewMutation.mutate();
+  }
+
   const authenticateMutation = useMutation({
     mutationFn: async (password: string) => {
       const response = await fetch(`/api/public/sites/${id}/authenticate`, {
@@ -392,8 +411,33 @@ export default function PublicSite() {
     }
   };
 
-  // Authentication form
-  if (!isAuthenticated) {
+  // Show loading state while fetching site info
+  if (isLoadingSiteInfo) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Show error if site not found
+  if (!siteInfo) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>Site Not Found</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>The requested site could not be found or is no longer active.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show authentication form if site requires password and user isn't authenticated
+  if ((siteInfo as any).requiresPassword && !isAuthenticated) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
         <div className="w-full max-w-md">
