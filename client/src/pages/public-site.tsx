@@ -35,7 +35,7 @@ export default function PublicSite() {
   }
 
   // Load initial site info
-  const { data: siteInfo, isLoading: isLoadingSiteInfo } = useQuery({
+  const { data: siteInfo, isLoading: isLoadingSiteInfo, error: siteInfoError } = useQuery({
     queryKey: [`/api/public/sites/${id}`],
     enabled: !!id,
   });
@@ -43,23 +43,24 @@ export default function PublicSite() {
   // Auto-load full site content if no password required
   const { data: fullSite, isLoading: isLoadingFullSite } = useQuery({
     queryKey: [`/site/${id}`],
-    enabled: !!id && !!siteInfo && !(siteInfo as any).requiresPassword,
+    enabled: !!id && !!siteInfo && !Boolean((siteInfo as any)?.requiresPassword),
   });
-  
-  // Handle auto-loading of site content when no password is required
-  if (fullSite && !isAuthenticated && !(siteInfo as any).requiresPassword) {
-    setSite(fullSite);
-    setIsAuthenticated(true);
-    recordViewMutation.mutate();
-  }
+
+  const recordViewMutation = useMutation({
+    mutationFn: async () => {
+      await fetch(`/api/public/sites/${id}/view`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+      });
+    }
+  });
 
   const authenticateMutation = useMutation({
     mutationFn: async (password: string) => {
       const response = await fetch(`/api/public/sites/${id}/authenticate`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password })
       });
       
@@ -72,7 +73,6 @@ export default function PublicSite() {
     onSuccess: (data) => {
       setSite(data);
       setIsAuthenticated(true);
-      // Record the site view
       recordViewMutation.mutate();
     },
     onError: (error) => {
@@ -80,23 +80,12 @@ export default function PublicSite() {
     }
   });
 
-  const recordViewMutation = useMutation({
-    mutationFn: async () => {
-      const response = await fetch(`/api/public/sites/${id}/view`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({})
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to record view');
-      }
-      
-      return response.json();
-    }
-  });
+  // Handle auto-loading of site content when no password is required
+  if (fullSite && !isAuthenticated && !Boolean((siteInfo as any)?.requiresPassword)) {
+    setSite(fullSite);
+    setIsAuthenticated(true);
+    recordViewMutation.mutate();
+  }
 
   const { data: templates } = useQuery({
     queryKey: ['/api/templates'],
@@ -437,7 +426,7 @@ export default function PublicSite() {
   }
 
   // Show authentication form if site requires password and user isn't authenticated
-  if ((siteInfo as any).requiresPassword && !isAuthenticated) {
+  if (Boolean((siteInfo as any)?.requiresPassword) && !isAuthenticated) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
         <div className="w-full max-w-md">
