@@ -201,7 +201,7 @@ export default function ActivityPage() {
               <Activity className="h-8 w-8 text-purple-600" />
               <div>
                 <p className="text-sm text-slate-600">Total Activities</p>
-                <p className="text-2xl font-bold">{activities?.length || 0}</p>
+                <p className="text-2xl font-bold">{activities.length}</p>
               </div>
             </div>
           </CardContent>
@@ -214,11 +214,11 @@ export default function ActivityPage() {
               <div>
                 <p className="text-sm text-slate-600">Today</p>
                 <p className="text-2xl font-bold">
-                  {activities?.filter((a: any) => {
+                  {activities.filter((a: any) => {
                     const activityDate = new Date(a.createdAt);
                     const now = new Date();
                     return activityDate.toDateString() === now.toDateString();
-                  }).length || 0}
+                  }).length}
                 </p>
               </div>
             </div>
