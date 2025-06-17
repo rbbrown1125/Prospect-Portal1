@@ -45,44 +45,35 @@ export default function SiteEdit() {
   });
 
   useEffect(() => {
-    if (site) {
-      setSiteName(site.name || '');
-      setProspectName(site.prospectName || '');
-      setProspectCompany(site.prospectCompany || '');
-      setProspectEmail(site.prospectEmail || '');
-      setPassword(site.password || '');
-      setCustomContent(site.customContent || '');
+    if (site && typeof site === 'object') {
+      setSiteName((site as any).name || '');
+      setProspectName((site as any).prospectName || '');
+      setProspectCompany((site as any).prospectCompany || '');
+      setProspectEmail((site as any).prospectEmail || '');
+      setPassword((site as any).password || '');
+      setCustomContent((site as any).customContent || '');
     }
   }, [site]);
 
   useEffect(() => {
-    if (templates && site) {
-      console.log('Loading template for site:', { siteId: site.id, templateId: site.templateId });
-      const template = templates.find((t: any) => t.id === site.templateId);
-      console.log('Found template:', template);
+    if (Array.isArray(templates) && site && typeof site === 'object' && (site as any).templateId) {
+      const template = templates.find((t: any) => t.id === (site as any).templateId);
       
       if (template?.content) {
         let templateContent = template.content;
-        console.log('Template content type:', typeof templateContent);
         
         // Parse template content if it's a string
         if (typeof templateContent === 'string') {
           try {
             templateContent = JSON.parse(templateContent);
-            console.log('Parsed template content:', templateContent);
           } catch (e) {
             console.error('Failed to parse template content:', e);
             templateContent = null;
           }
         }
         if (templateContent?.sections) {
-          console.log('Setting template sections:', templateContent.sections);
           setTemplateSections([...templateContent.sections]);
-        } else {
-          console.log('No sections found in template content');
         }
-      } else {
-        console.log('No template content found');
       }
     }
   }, [templates, site]);

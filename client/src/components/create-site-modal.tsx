@@ -262,7 +262,7 @@ export default function CreateSiteModal({ isOpen, onClose, preSelectedTemplateId
           
           <div>
             <Label>Prospect Information</Label>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
               <Input
                 value={prospectName}
                 onChange={(e) => setProspectName(e.target.value)}
@@ -275,6 +275,11 @@ export default function CreateSiteModal({ isOpen, onClose, preSelectedTemplateId
                 onChange={(e) => setProspectEmail(e.target.value)}
                 placeholder="Prospect email"
                 required
+              />
+              <Input
+                value={prospectCompany}
+                onChange={(e) => setProspectCompany(e.target.value)}
+                placeholder="Company name"
               />
             </div>
           </div>
@@ -294,7 +299,7 @@ export default function CreateSiteModal({ isOpen, onClose, preSelectedTemplateId
             <Label>Select Template</Label>
             <div className="max-h-96 overflow-y-auto mt-2 border border-slate-200 rounded-lg p-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {templates?.map((template: any) => (
+                {Array.isArray(templates) ? templates.map((template: any) => (
                   <Card
                     key={template.id}
                     className={`p-3 cursor-pointer transition-all ${
@@ -315,7 +320,7 @@ export default function CreateSiteModal({ isOpen, onClose, preSelectedTemplateId
                       </div>
                     </div>
                   </Card>
-                ))}
+                )) : <div className="text-slate-500 text-sm">Loading templates...</div>}
               </div>
             </div>
           </div>
