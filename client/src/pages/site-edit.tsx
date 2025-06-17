@@ -57,11 +57,20 @@ export default function SiteEdit() {
   }, [site]);
 
   useEffect(() => {
+    console.log('Template loading effect triggered:', { 
+      hasTemplates: Array.isArray(templates), 
+      templatesLength: templates?.length,
+      hasSite: !!site, 
+      siteTemplateId: site?.templateId 
+    });
+    
     if (Array.isArray(templates) && site && site.templateId) {
       const template = templates.find(t => t.id === site.templateId);
+      console.log('Found template:', template);
       
       if (template?.content) {
         let templateContent = template.content;
+        console.log('Template content:', templateContent, 'Type:', typeof templateContent);
         
         // Parse template content if it's a string
         if (typeof templateContent === 'string') {
@@ -72,9 +81,53 @@ export default function SiteEdit() {
             templateContent = {};
           }
         }
+        
+        console.log('Parsed template content:', templateContent);
+        
         if (templateContent && typeof templateContent === 'object' && 'sections' in templateContent) {
+          console.log('Setting template sections:', templateContent.sections);
           setTemplateSections([...(templateContent.sections as any[])]);
+        } else {
+          console.log('No sections found in template content');
+          // If no sections exist, create a default structure for editing
+          const defaultSections = [
+            {
+              id: 'hero-1',
+              type: 'hero',
+              title: 'Welcome {{prospect_name}}',
+              subtitle: 'Personalized content from {{company_name}}',
+              content: 'This is a personalized landing page created specifically for you.'
+            },
+            {
+              id: 'file-section-1',
+              type: 'file_section',
+              title: 'Important Documents',
+              description: 'Please review the following materials:',
+              files: []
+            }
+          ];
+          setTemplateSections(defaultSections);
         }
+      } else {
+        console.log('No template content found');
+        // Create default sections when no template content exists
+        const defaultSections = [
+          {
+            id: 'hero-1',
+            type: 'hero',
+            title: 'Welcome {{prospect_name}}',
+            subtitle: 'Personalized content from {{company_name}}',
+            content: 'This is a personalized landing page created specifically for you.'
+          },
+          {
+            id: 'file-section-1',
+            type: 'file_section',
+            title: 'Important Documents',
+            description: 'Please review the following materials:',
+            files: []
+          }
+        ];
+        setTemplateSections(defaultSections);
       }
     }
   }, [templates, site]);
