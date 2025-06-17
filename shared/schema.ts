@@ -117,18 +117,6 @@ export const files = pgTable("files", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Activity log for admin tracking
-export const activityLog = pgTable("activity_log", {
-  id: text("id").primaryKey().notNull().$defaultFn(() => nanoid()),
-  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  activityType: varchar("activity_type", { length: 100 }).notNull(), // 'site_created', 'prospect_added', etc.
-  description: text("description").notNull(),
-  entityId: text("entity_id"), // ID of the site, prospect, etc.
-  entityType: varchar("entity_type", { length: 50 }), // 'site', 'prospect', etc.
-  metadata: jsonb("metadata"), // Additional data about the activity
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
 // Schema exports
 export type InsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -150,9 +138,6 @@ export type Prospect = typeof prospects.$inferSelect;
 
 export type InsertFile = typeof files.$inferInsert;
 export type File = typeof files.$inferSelect;
-
-export type InsertActivityLog = typeof activityLog.$inferInsert;
-export type ActivityLog = typeof activityLog.$inferSelect;
 
 // Insert schemas
 export const insertTemplateSchema = createInsertSchema(templates).omit({

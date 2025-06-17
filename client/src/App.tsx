@@ -12,7 +12,6 @@ import Templates from "@/pages/templates";
 import Content from "@/pages/content";
 import Analytics from "@/pages/analytics";
 import Prospects from "@/pages/prospects";
-import ActivityPage from "@/pages/activity";
 import TemplatePreview from "@/pages/template-preview";
 import SiteViewer from "@/pages/site-viewer";
 import PublicSite from "@/pages/public-site";
@@ -31,13 +30,11 @@ function Router() {
 
   return (
     <Switch>
-      {/* Public routes that work regardless of authentication */}
-      <Route path="/site/:id" component={PublicSite} />
-      <Route path="/preview/template/:id" component={TemplatePreview} />
-      
       {!isAuthenticated ? (
         <>
           <Route path="/" component={Auth} />
+          <Route path="/preview/template/:id" component={TemplatePreview} />
+          <Route path="/site/:id" component={PublicSite} />
         </>
       ) : (
         <>
@@ -49,7 +46,8 @@ function Router() {
           <Route path="/content" component={Content} />
           <Route path="/analytics" component={Analytics} />
           <Route path="/prospects" component={Prospects} />
-          <Route path="/activity" component={ActivityPage} />
+          <Route path="/preview/template/:id" component={TemplatePreview} />
+          <Route path="/site/:id" component={PublicSite} />
         </>
       )}
       <Route component={NotFound} />

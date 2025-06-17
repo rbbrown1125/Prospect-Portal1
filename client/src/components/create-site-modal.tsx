@@ -32,11 +32,9 @@ export default function CreateSiteModal({ isOpen, onClose, preSelectedTemplateId
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: templatesData } = useQuery({
+  const { data: templates } = useQuery({
     queryKey: ['/api/templates'],
   });
-  
-  const templates = Array.isArray(templatesData) ? templatesData : [];
 
   // Update selected template when preSelectedTemplateId changes
   useEffect(() => {
@@ -293,7 +291,7 @@ export default function CreateSiteModal({ isOpen, onClose, preSelectedTemplateId
             <Label>Select Template</Label>
             <div className="max-h-96 overflow-y-auto mt-2 border border-slate-200 rounded-lg p-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {templates.map((template: any) => (
+                {templates?.map((template: any) => (
                   <Card
                     key={template.id}
                     className={`p-3 cursor-pointer transition-all ${

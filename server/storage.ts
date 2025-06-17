@@ -6,7 +6,6 @@ import {
   siteViews,
   prospects,
   files,
-  activityLog,
   type User,
   type InsertUser,
   type Site,
@@ -20,8 +19,6 @@ import {
   type InsertProspect,
   type File,
   type InsertFile,
-  type ActivityLog,
-  type InsertActivityLog,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, count, sql, and, ne, or } from "drizzle-orm";
@@ -70,10 +67,6 @@ export interface IStorage {
   // Analytics operations
   getSiteAnalytics(siteId: string, userId: string): Promise<any>;
   recordSiteView(viewData: InsertSiteView): Promise<void>;
-  
-  // Activity logging operations
-  logActivity(activityData: InsertActivityLog): Promise<ActivityLog>;
-  getActivityLog(): Promise<ActivityLog[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -153,22 +146,6 @@ export class DatabaseStorage implements IStorage {
 
   async createSite(siteData: InsertSite): Promise<Site> {
     const [site] = await db.insert(sites).values(siteData).returning();
-    
-    // Log the activity
-    await this.logActivity({
-      userId: siteData.userId,
-      activityType: 'site_created',
-      description: `Created site "${site.name}" for prospect ${site.prospectName}`,
-      entityId: site.id,
-      entityType: 'site',
-      metadata: {
-        siteName: site.name,
-        prospectName: site.prospectName,
-        prospectEmail: site.prospectEmail,
-        templateId: site.templateId,
-      },
-    });
-    
     return site;
   }
 
@@ -266,21 +243,6 @@ export class DatabaseStorage implements IStorage {
 
   async createProspect(prospectData: InsertProspect): Promise<Prospect> {
     const [prospect] = await db.insert(prospects).values(prospectData).returning();
-    
-    // Log the activity
-    await this.logActivity({
-      userId: prospectData.userId,
-      activityType: 'prospect_added',
-      description: `Added prospect "${prospect.name}" (${prospect.email})`,
-      entityId: prospect.id,
-      entityType: 'prospect',
-      metadata: {
-        prospectName: prospect.name,
-        prospectEmail: prospect.email,
-        company: prospect.company,
-      },
-    });
-    
     return prospect;
   }
 
@@ -315,41 +277,6 @@ export class DatabaseStorage implements IStorage {
       .delete(files)
       .where(and(eq(files.id, fileId), eq(files.userId, userId)));
     return (result.rowCount || 0) > 0;
-  }
-
-  // Activity logging operations
-  async logActivity(activityData: InsertActivityLog): Promise<ActivityLog> {
-    const [activity] = await db
-      .insert(activityLog)
-      .values(activityData)
-      .returning();
-    return activity;
-  }
-
-  async getActivityLog(): Promise<ActivityLog[]> {
-    const activities = await db
-      .select({
-        id: activityLog.id,
-        userId: activityLog.userId,
-        activityType: activityLog.activityType,
-        description: activityLog.description,
-        entityId: activityLog.entityId,
-        entityType: activityLog.entityType,
-        metadata: activityLog.metadata,
-        createdAt: activityLog.createdAt,
-        user: {
-          id: users.id,
-          email: users.email,
-          firstName: users.firstName,
-          lastName: users.lastName,
-        }
-      })
-      .from(activityLog)
-      .leftJoin(users, eq(activityLog.userId, users.id))
-      .orderBy(desc(activityLog.createdAt))
-      .limit(100);
-
-    return activities as ActivityLog[];
   }
 }
 
