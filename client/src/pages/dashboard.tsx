@@ -187,10 +187,10 @@ export default function Dashboard() {
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
-                              <Button variant="outline" size="sm" onClick={() => setLocation(`/sites/${site.id}`)}>
+                              <Button variant="outline" size="sm" onClick={() => setLocation(`/sites/${site.id}/edit`)}>
                                 Edit
                               </Button>
-                              <Button variant="outline" size="sm" onClick={() => setLocation(`/sites/${site.id}/preview`)}>
+                              <Button variant="outline" size="sm" onClick={() => window.open(`/site/${site.id}`, '_blank')}>
                                 <ExternalLink className="h-4 w-4" />
                               </Button>
                             </div>
@@ -231,7 +231,7 @@ export default function Dashboard() {
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
-                              <Button variant="outline" size="sm" onClick={() => setLocation(`/sites/${item.site.id}/preview`)}>
+                              <Button variant="outline" size="sm" onClick={() => window.open(`/site/${item.site.id}`, '_blank')}>
                                 <ExternalLink className="h-4 w-4" />
                               </Button>
                             </div>
