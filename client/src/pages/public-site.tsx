@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams } from "wouter";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,50 @@ export default function PublicSite() {
   const [password, setPassword] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [site, setSite] = useState<any>(null);
+
+  // Fetch basic site info first
+  const { data: siteInfo } = useQuery({
+    queryKey: ['/api/public/sites', id],
+    queryFn: async () => {
+      const response = await fetch(`/api/public/sites/${id}`);
+      if (!response.ok) {
+        throw new Error('Site not found');
+      }
+      return response.json();
+    },
+    enabled: !!id,
+  });
+
+  // For sites without password, try to authenticate automatically
+  const autoAuthMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch(`/api/public/sites/${id}/authenticate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ password: "" })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Authentication failed');
+      }
+      
+      return response.json();
+    },
+    onSuccess: (data) => {
+      setSite(data);
+      setIsAuthenticated(true);
+      recordViewMutation.mutate();
+    },
+  });
+
+  // Auto-authenticate if site doesn't require password
+  useEffect(() => {
+    if (siteInfo && !siteInfo.requiresPassword && !isAuthenticated && !site) {
+      autoAuthMutation.mutate();
+    }
+  }, [siteInfo, isAuthenticated, site]);
 
   const authenticateMutation = useMutation({
     mutationFn: async (password: string) => {

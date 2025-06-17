@@ -370,41 +370,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Public site access (for prospects)
-  app.get('/site/:id', async (req, res) => {
-    try {
-      const site = await storage.getPublicSite(req.params.id);
-      if (!site) {
-        return res.status(404).json({ message: "Site not found" });
-      }
-      
-      // Record view
-      await storage.recordSiteView({
-        siteId: req.params.id,
-        ipAddress: req.ip,
-        userAgent: req.get('User-Agent'),
-      });
-      
-      res.json(site);
-    } catch (error) {
-      console.error("Error fetching public site:", error);
-      res.status(500).json({ message: "Failed to fetch site" });
-    }
-  });
 
-  app.post('/site/:id/authenticate', async (req, res) => {
-    try {
-      const { password } = req.body;
-      const site = await storage.authenticateProspectSite(req.params.id, password);
-      if (!site) {
-        return res.status(401).json({ message: "Invalid site or password" });
-      }
-      res.json(site);
-    } catch (error) {
-      console.error("Error authenticating site:", error);
-      res.status(500).json({ message: "Failed to authenticate" });
-    }
-  });
 
   const httpServer = createServer(app);
   return httpServer;
