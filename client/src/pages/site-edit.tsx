@@ -57,21 +57,32 @@ export default function SiteEdit() {
 
   useEffect(() => {
     if (templates && site) {
+      console.log('Loading template for site:', { siteId: site.id, templateId: site.templateId });
       const template = templates.find((t: any) => t.id === site.templateId);
+      console.log('Found template:', template);
+      
       if (template?.content) {
         let templateContent = template.content;
+        console.log('Template content type:', typeof templateContent);
+        
         // Parse template content if it's a string
         if (typeof templateContent === 'string') {
           try {
             templateContent = JSON.parse(templateContent);
+            console.log('Parsed template content:', templateContent);
           } catch (e) {
             console.error('Failed to parse template content:', e);
             templateContent = null;
           }
         }
         if (templateContent?.sections) {
+          console.log('Setting template sections:', templateContent.sections);
           setTemplateSections([...templateContent.sections]);
+        } else {
+          console.log('No sections found in template content');
         }
+      } else {
+        console.log('No template content found');
       }
     }
   }, [templates, site]);

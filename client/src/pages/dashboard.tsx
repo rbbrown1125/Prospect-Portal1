@@ -32,9 +32,7 @@ export default function Dashboard() {
     queryKey: ['/api/sites/team'],
   });
 
-  // Ensure data is treated as arrays
-  const mySitesArray = Array.isArray(mySites) ? mySites : [];
-  const teamSitesArray = Array.isArray(teamSites) ? teamSites : [];
+
 
   const handleKpiClick = (kpiType: string) => {
     setSelectedKpi(kpiType);
@@ -218,9 +216,9 @@ export default function Dashboard() {
                   <TabsContent value="team-sites" className="space-y-4">
                     {teamSitesLoading ? (
                       <div className="text-center py-8 text-slate-500">Loading team sites...</div>
-                    ) : teamSitesArray.length > 0 ? (
+                    ) : Array.isArray(teamSites) && teamSites.length > 0 ? (
                       <div className="grid gap-4">
-                        {teamSitesArray.slice(0, 5).map((item: any) => (
+                        {teamSites.slice(0, 5).map((item: any) => (
                           <div key={item.site.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-slate-50">
                             <div className="flex-1">
                               <div className="flex items-center gap-3">

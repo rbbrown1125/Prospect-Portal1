@@ -59,7 +59,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       const siteData = insertSiteSchema.parse({ ...req.body, userId });
+      
+      // Create the site
       const site = await storage.createSite(siteData);
+      
+      // Create a prospect record for this site
+      if (site.prospectName && site.prospectEmail) {
+        try {
+          await storage.createProspect({
+            userId,
+            name: site.prospectName,
+            email: site.prospectEmail,
+            company: site.prospectCompany || '',
+            status: 'new',
+            siteId: site.id,
+            notes: `Site "${site.name}" created for this prospect`,
+          });
+        } catch (prospectError) {
+          console.error("Error creating prospect record:", prospectError);
+          // Don't fail site creation if prospect creation fails
+        }
+      }
+      
       res.json(site);
     } catch (error) {
       if (error instanceof z.ZodError) {
