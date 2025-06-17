@@ -51,8 +51,8 @@ export default function SiteEdit() {
       setProspectName(site.prospectName || '');
       setProspectCompany(site.prospectCompany || '');
       setProspectEmail(site.prospectEmail || '');
-      setPassword(site.password || '');
-      setCustomContent(site.customContent || '');
+      setPassword(site.accessPassword || '');
+      setCustomContent(typeof site.customContent === 'string' ? site.customContent : JSON.stringify(site.customContent || {}));
     }
   }, [site]);
 
@@ -69,11 +69,11 @@ export default function SiteEdit() {
             templateContent = JSON.parse(templateContent);
           } catch (e) {
             console.error('Failed to parse template content:', e);
-            templateContent = null;
+            templateContent = {};
           }
         }
-        if (templateContent?.sections) {
-          setTemplateSections([...templateContent.sections]);
+        if (templateContent && typeof templateContent === 'object' && 'sections' in templateContent) {
+          setTemplateSections([...(templateContent.sections as any[])]);
         }
       }
     }
@@ -305,7 +305,7 @@ export default function SiteEdit() {
     );
   }
 
-  const template = templates && Array.isArray(templates) ? templates.find((t: any) => t.id === (site as any)?.templateId) : null;
+  const template = templates && Array.isArray(templates) ? templates.find(t => t.id === site?.templateId) : null;
 
   return (
     <div className="flex h-screen bg-slate-50">
@@ -336,7 +336,7 @@ export default function SiteEdit() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => window.open(`/site/${(site as any)?.id}`, '_blank')}
+                onClick={() => window.open(`/site/${site?.id}`, '_blank')}
               >
                 <Eye className="h-4 w-4 mr-2" />
                 <span className="hidden sm:inline">Preview</span>
@@ -713,24 +713,24 @@ export default function SiteEdit() {
                   <CardContent>
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-primary">{(site as any)?.views || 0}</div>
+                        <div className="text-2xl font-bold text-primary">{site?.views || 0}</div>
                         <div className="text-sm text-slate-600">Total Views</div>
                       </div>
                       <div className="text-center">
                         <div className="text-2xl font-bold text-green-600">
-                          {(site as any)?.isActive ? 'Active' : 'Draft'}
+                          {site?.isActive ? 'Active' : 'Draft'}
                         </div>
                         <div className="text-sm text-slate-600">Status</div>
                       </div>
                       <div className="text-center">
                         <div className="text-2xl font-bold text-slate-700">
-                          {(site as any)?.createdAt ? new Date((site as any).createdAt).toLocaleDateString() : 'N/A'}
+                          {site?.createdAt ? new Date(site.createdAt).toLocaleDateString() : 'N/A'}
                         </div>
                         <div className="text-sm text-slate-600">Created</div>
                       </div>
                       <div className="text-center">
                         <div className="text-2xl font-bold text-slate-700">
-                          {(site as any)?.updatedAt ? new Date((site as any).updatedAt).toLocaleDateString() : 'N/A'}
+                          {site?.updatedAt ? new Date(site.updatedAt).toLocaleDateString() : 'N/A'}
                         </div>
                         <div className="text-sm text-slate-600">Last Updated</div>
                       </div>
