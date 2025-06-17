@@ -57,37 +57,8 @@ export default function SiteEdit() {
   }, [site]);
 
   useEffect(() => {
-    // Initialize with default sections when site loads
-    if (site && templateSections.length === 0) {
-      const defaultSections = [
-        {
-          id: 'hero-1',
-          type: 'hero',
-          title: `Welcome ${site.prospectName}`,
-          subtitle: `Personalized content from ${site.prospectCompany || 'our team'}`,
-          content: 'This is a personalized landing page created specifically for you.'
-        },
-        {
-          id: 'file-section-1',
-          type: 'file_section',
-          title: 'Important Documents',
-          description: 'Please review the following materials:',
-          files: []
-        },
-        {
-          id: 'overview-1',
-          type: 'overview',
-          title: 'Overview',
-          content: 'Here you can provide additional context and information for your prospect.'
-        }
-      ];
-      setTemplateSections(defaultSections);
-    }
-  }, [site]);
-
-  useEffect(() => {
-    // Load template content if available
-    if (Array.isArray(templates) && site && site.templateId && templateSections.length === 0) {
+    // Load actual template content when site and templates are available
+    if (Array.isArray(templates) && site && site.templateId) {
       const template = templates.find(t => t.id === site.templateId);
       
       if (template?.content) {
@@ -99,12 +70,27 @@ export default function SiteEdit() {
             templateContent = JSON.parse(templateContent);
           } catch (e) {
             console.error('Failed to parse template content:', e);
-            return; // Keep default sections
+            templateContent = {};
           }
         }
         
+        // Load actual template sections with real content
         if (templateContent && typeof templateContent === 'object' && 'sections' in templateContent) {
-          setTemplateSections([...(templateContent.sections as any[])]);
+          const sectionsWithIds = (templateContent.sections as any[]).map((section, index) => ({
+            ...section,
+            id: section.id || `section-${index}`,
+            // Replace template variables with actual prospect data
+            title: section.title?.replace('{{prospect_name}}', site.prospectName)
+                                 .replace('{{company_name}}', site.prospectCompany || 'your company')
+                                 .replace('{{prospect_company}}', site.prospectCompany || 'your company'),
+            subtitle: section.subtitle?.replace('{{prospect_name}}', site.prospectName)
+                                      .replace('{{company_name}}', site.prospectCompany || 'your company')
+                                      .replace('{{prospect_company}}', site.prospectCompany || 'your company'),
+            content: section.content?.replace('{{prospect_name}}', site.prospectName)
+                                    .replace('{{company_name}}', site.prospectCompany || 'your company')
+                                    .replace('{{prospect_company}}', site.prospectCompany || 'your company')
+          }));
+          setTemplateSections(sectionsWithIds);
         }
       }
     }
@@ -256,13 +242,23 @@ export default function SiteEdit() {
     switch (type) {
       case 'hero':
       case 'header':
+      case 'cover':
         return <Type className="h-4 w-4" />;
       case 'file_section':
       case 'file_gallery':
+      case 'file_categories':
       case 'deliverables':
         return <FileText className="h-4 w-4" />;
       case 'features':
+      case 'overview':
+      case 'introduction':
+      case 'welcome':
+      case 'project_summary':
         return <Edit3 className="h-4 w-4" />;
+      case 'contact':
+      case 'support':
+      case 'next_steps':
+        return <Type className="h-4 w-4" />;
       default:
         return <Type className="h-4 w-4" />;
     }
@@ -272,18 +268,21 @@ export default function SiteEdit() {
     switch (section.type) {
       case 'hero':
       case 'header':
+      case 'cover':
         return (
           <div className="bg-gradient-to-br from-primary/10 to-primary/5 p-4 rounded border">
             <h3 className="font-bold text-lg">{section.title}</h3>
-            <p className="text-slate-600">{section.subtitle || section.content}</p>
+            {section.subtitle && <p className="text-slate-600 mt-1">{section.subtitle}</p>}
+            {section.content && <p className="text-sm text-slate-500 mt-2">{section.content}</p>}
           </div>
         );
       case 'file_section':
       case 'file_gallery':
+      case 'deliverables':
         return (
           <div className="border p-4 rounded">
             <h3 className="font-semibold mb-2">{section.title}</h3>
-            <p className="text-sm text-slate-600 mb-2">{section.content}</p>
+            {section.content && <p className="text-sm text-slate-600 mb-2">{section.content}</p>}
             <div className="flex items-center space-x-2">
               <FileText className="h-4 w-4 text-blue-600" />
               <span className="text-sm">
@@ -292,12 +291,53 @@ export default function SiteEdit() {
             </div>
           </div>
         );
+      case 'file_categories':
+        return (
+          <div className="border p-4 rounded">
+            <h3 className="font-semibold mb-2">{section.title}</h3>
+            {section.content && <p className="text-sm text-slate-600 mb-2">{section.content}</p>}
+            <div className="space-y-2">
+              {section.categories?.map((category: any, index: number) => (
+                <div key={index} className="bg-slate-50 p-2 rounded">
+                  <div className="font-medium text-sm">{category.name}</div>
+                  <div className="text-xs text-slate-600">{category.files?.length || 0} files</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      case 'overview':
+      case 'introduction':
+      case 'welcome':
+      case 'project_summary':
+        return (
+          <div className="border p-4 rounded bg-blue-50">
+            <h3 className="font-semibold mb-2">{section.title}</h3>
+            <p className="text-sm text-slate-600">
+              {section.content?.substring(0, 150)}
+              {section.content?.length > 150 ? '...' : ''}
+            </p>
+          </div>
+        );
+      case 'contact':
+      case 'support':
+      case 'next_steps':
+        return (
+          <div className="border p-4 rounded bg-green-50">
+            <h3 className="font-semibold mb-2">{section.title}</h3>
+            <p className="text-sm text-slate-600">
+              {section.content?.substring(0, 100)}
+              {section.content?.length > 100 ? '...' : ''}
+            </p>
+          </div>
+        );
       default:
         return (
           <div className="border p-4 rounded">
             <h3 className="font-semibold">{section.title}</h3>
             <p className="text-sm text-slate-600 mt-1">
-              {section.content?.substring(0, 100)}...
+              {section.content?.substring(0, 100)}
+              {section.content?.length > 100 ? '...' : ''}
             </p>
           </div>
         );
