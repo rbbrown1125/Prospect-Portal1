@@ -24,6 +24,7 @@ export default function CreateSiteModal({ isOpen, onClose, preSelectedTemplateId
   const [siteName, setSiteName] = useState("");
   const [prospectName, setProspectName] = useState("");
   const [prospectEmail, setProspectEmail] = useState("");
+  const [prospectCompany, setProspectCompany] = useState("");
   const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(preSelectedTemplateId || null);
   const [accessPassword, setAccessPassword] = useState("");
   const [createdSite, setCreatedSite] = useState<any>(null);
@@ -94,6 +95,7 @@ export default function CreateSiteModal({ isOpen, onClose, preSelectedTemplateId
       name: siteName,
       prospectName,
       prospectEmail,
+      prospectCompany,
       templateId: selectedTemplateId,
       accessPassword,
       isActive: true,
@@ -104,6 +106,7 @@ export default function CreateSiteModal({ isOpen, onClose, preSelectedTemplateId
     setSiteName("");
     setProspectName("");
     setProspectEmail("");
+    setProspectCompany("");
     setSelectedTemplateId(preSelectedTemplateId || null);
     setAccessPassword("");
     setCreatedSite(null);

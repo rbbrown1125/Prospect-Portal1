@@ -57,6 +57,7 @@ export const sites = pgTable("sites", {
   templateId: integer("template_id").references(() => templates.id),
   prospectName: varchar("prospect_name").notNull(),
   prospectEmail: varchar("prospect_email").notNull(),
+  prospectCompany: varchar("prospect_company"),
   customContent: jsonb("custom_content"),
   isActive: boolean("is_active").default(true),
   accessPassword: varchar("access_password"),
@@ -99,6 +100,7 @@ export const prospects = pgTable("prospects", {
   phone: varchar("phone", { length: 50 }),
   notes: text("notes"),
   status: varchar("status", { length: 50 }).default('active').notNull(),
+  siteId: uuid("site_id").references(() => sites.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
