@@ -32,11 +32,18 @@ export default function Dashboard() {
     queryKey: ['/api/sites/team'],
   });
 
+  // Ensure data is treated as arrays
+  const mySitesArray = Array.isArray(mySites) ? mySites : [];
+  const teamSitesArray = Array.isArray(teamSites) ? teamSites : [];
+
   const handleKpiClick = (kpiType: string) => {
     setSelectedKpi(kpiType);
   };
 
   const renderKpiDetails = (kpiType: string) => {
+    const mySitesCount = Array.isArray(mySites) ? mySites.length : 0;
+    const teamSitesCount = Array.isArray(teamSites) ? teamSites.length : 0;
+    
     switch (kpiType) {
       case 'active-sites':
         return (
@@ -44,11 +51,11 @@ export default function Dashboard() {
             <h3 className="font-semibold">Active Sites Breakdown</h3>
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-blue-50 p-4 rounded-lg">
-                <div className="text-2xl font-bold text-blue-600">{mySites?.length || 0}</div>
+                <div className="text-2xl font-bold text-blue-600">{mySitesCount}</div>
                 <div className="text-sm text-blue-800">My Sites</div>
               </div>
               <div className="bg-green-50 p-4 rounded-lg">
-                <div className="text-2xl font-bold text-green-600">{teamSites?.length || 0}</div>
+                <div className="text-2xl font-bold text-green-600">{teamSitesCount}</div>
                 <div className="text-sm text-green-800">Team Sites</div>
               </div>
             </div>
@@ -161,17 +168,17 @@ export default function Dashboard() {
                 <Tabs defaultValue="my-sites" className="w-full">
                   <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="my-sites">
-                      My Sites ({mySites?.length || 0})
+                      My Sites ({Array.isArray(mySites) ? mySites.length : 0})
                     </TabsTrigger>
                     <TabsTrigger value="team-sites">
-                      Team Sites ({teamSites?.length || 0})
+                      Team Sites ({Array.isArray(teamSites) ? teamSites.length : 0})
                     </TabsTrigger>
                   </TabsList>
                   
                   <TabsContent value="my-sites" className="space-y-4">
                     {mySitesLoading ? (
                       <div className="text-center py-8 text-slate-500">Loading your sites...</div>
-                    ) : mySites && mySites.length > 0 ? (
+                    ) : Array.isArray(mySites) && mySites.length > 0 ? (
                       <div className="grid gap-4">
                         {mySites.slice(0, 5).map((site: any) => (
                           <div key={site.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-slate-50">
@@ -211,9 +218,9 @@ export default function Dashboard() {
                   <TabsContent value="team-sites" className="space-y-4">
                     {teamSitesLoading ? (
                       <div className="text-center py-8 text-slate-500">Loading team sites...</div>
-                    ) : teamSites && teamSites.length > 0 ? (
+                    ) : teamSitesArray.length > 0 ? (
                       <div className="grid gap-4">
-                        {teamSites.slice(0, 5).map((item: any) => (
+                        {teamSitesArray.slice(0, 5).map((item: any) => (
                           <div key={item.site.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-slate-50">
                             <div className="flex-1">
                               <div className="flex items-center gap-3">
