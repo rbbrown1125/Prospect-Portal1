@@ -407,7 +407,11 @@ export default function SiteEdit() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => window.open(`/site/${site?.id}`, '_blank')}
+                onClick={() => {
+                  // Open in new tab and handle authentication issues
+                  const previewUrl = `${window.location.origin}/site/${site?.id}`;
+                  window.open(previewUrl, '_blank');
+                }}
               >
                 <Eye className="h-4 w-4 mr-2" />
                 <span className="hidden sm:inline">Preview</span>
