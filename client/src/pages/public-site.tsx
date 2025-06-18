@@ -1,5 +1,5 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useParams } from "wouter";
+import { useRoute } from "wouter";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +10,8 @@ import { FileText, Presentation, BarChart3, Lock, Eye, Share2 } from "lucide-rea
 import { apiRequest } from "@/lib/queryClient";
 
 export default function PublicSite() {
-  const { id } = useParams();
+  const [, params] = useRoute('/site/:id');
+  const id = params?.id;
   const [password, setPassword] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [site, setSite] = useState<any>(null);
@@ -104,9 +105,7 @@ export default function PublicSite() {
     }
   });
 
-  const { data: templates } = useQuery({
-    queryKey: ['/api/templates'],
-  });
+  // Templates are not needed for public site rendering
 
   const getTemplateIcon = (category: string) => {
     switch (category?.toLowerCase()) {
