@@ -1,12 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
-import { useParams } from "wouter";
+import { useRoute } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, FileText, Presentation, BarChart3 } from "lucide-react";
 
 export default function TemplatePreview() {
-  const { id } = useParams();
+  const [, params] = useRoute('/preview/template/:id');
+  const id = params?.id;
 
   const { data: previewData, isLoading } = useQuery({
     queryKey: [`/preview/template/${id}`],

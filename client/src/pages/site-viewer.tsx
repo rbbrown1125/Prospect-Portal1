@@ -1,12 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
-import { useParams } from "wouter";
+import { useRoute } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, FileText, Presentation, BarChart3, Eye, Share2 } from "lucide-react";
 
 export default function SiteViewer() {
-  const { id } = useParams();
+  const [, params] = useRoute('/sites/:id');
+  const id = params?.id;
 
   const { data: site, isLoading } = useQuery({
     queryKey: [`/api/sites/${id}`],
