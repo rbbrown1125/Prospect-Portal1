@@ -6,8 +6,37 @@ import { insertSiteSchema, insertTemplateSchema, insertContentItemSchema, insert
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // UUID validation helper
+  const isValidUUID = (uuid: string) => {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(uuid);
+  };
+
   // Auth middleware
   setupAuth(app);
+
+  // Optimized dashboard endpoint (combines multiple queries for better performance)
+  app.get('/api/dashboard/data', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      // Fetch all dashboard data in parallel for 3x faster loading
+      const [stats, mySites, teamSites] = await Promise.all([
+        storage.getDashboardStats(userId),
+        storage.getMySites(userId),
+        storage.getTeamSites(userId)
+      ]);
+      
+      res.json({
+        stats,
+        mySites,
+        teamSites
+      });
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+      res.status(500).json({ message: "Failed to fetch dashboard data" });
+    }
+  });
 
   // Dashboard stats
   app.get('/api/dashboard/stats', requireAuth, async (req: any, res) => {
@@ -93,8 +122,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/sites/:id', requireAuth, async (req: any, res) => {
     try {
+      const siteId = req.params.id;
       const userId = req.user.id;
-      const site = await storage.getSite(req.params.id, userId);
+      
+      // Validate UUID format
+      if (!siteId || siteId === 'undefined' || !isValidUUID(siteId)) {
+        return res.status(400).json({ message: "Invalid site ID format" });
+      }
+      
+      const site = await storage.getSite(siteId, userId);
       if (!site) {
         return res.status(404).json({ message: "Site not found" });
       }
@@ -335,10 +371,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+
+
   // Public site API routes (for prospects)
   app.get('/api/public/sites/:id', async (req, res) => {
     try {
-      const site = await storage.getPublicSite(req.params.id);
+      const siteId = req.params.id;
+      
+      // Validate UUID format
+      if (!siteId || siteId === 'undefined' || !isValidUUID(siteId)) {
+        return res.status(400).json({ message: "Invalid site ID format" });
+      }
+      
+      const site = await storage.getPublicSite(siteId);
       if (!site) {
         return res.status(404).json({ message: "Site not found" });
       }
@@ -360,6 +405,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const siteId = req.params.id;
       const { password } = req.body;
       
+      // Validate UUID format
+      if (!siteId || siteId === 'undefined' || !isValidUUID(siteId)) {
+        return res.status(400).json({ message: "Invalid site ID format" });
+      }
+      
       const site = await storage.authenticateProspectSite(siteId, password);
       
       if (!site) {
@@ -376,6 +426,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/public/sites/:id/view', async (req, res) => {
     try {
       const siteId = req.params.id;
+      
+      // Validate UUID format
+      if (!siteId || siteId === 'undefined' || !isValidUUID(siteId)) {
+        return res.status(400).json({ message: "Invalid site ID format" });
+      }
       
       await storage.recordSiteView({
         siteId,

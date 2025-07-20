@@ -1,4 +1,3 @@
-import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useLocation } from "wouter";
 import Sidebar from "@/components/sidebar";
@@ -7,12 +6,14 @@ import RecentSites from "@/components/recent-sites";
 import QuickActions from "@/components/quick-actions";
 import TemplatesSection from "@/components/templates-section";
 import CreateSiteModal from "@/components/create-site-modal";
+import { DashboardSkeleton } from "@/components/loading-skeleton";
+import { useDashboardData, type DashboardData } from "@/hooks/use-dashboard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Menu, Globe, User, ExternalLink, Eye, Calendar } from "lucide-react";
+import { Plus, Menu, Globe, User, ExternalLink, Eye, Calendar, AlertCircle } from "lucide-react";
 
 export default function Dashboard() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -20,23 +21,55 @@ export default function Dashboard() {
   const [selectedKpi, setSelectedKpi] = useState<string | null>(null);
   const [, setLocation] = useLocation();
 
-  const { data: stats, isLoading: statsLoading } = useQuery({
-    queryKey: ['/api/dashboard/stats'],
-  });
-
-  const { data: mySites, isLoading: mySitesLoading } = useQuery({
-    queryKey: ['/api/sites/my'],
-  });
-
-  const { data: teamSites, isLoading: teamSitesLoading } = useQuery({
-    queryKey: ['/api/sites/team'],
-  });
+  // Use optimized dashboard data hook
+  const { data: dashboardData, isLoading, error } = useDashboardData();
+  
+  // Extract data for backward compatibility with safe defaults
+  const stats = dashboardData?.stats || { totalSites: 0, totalViews: 0, activeSites: 0, recentViews: 0 };
+  const mySites = dashboardData?.mySites || [];
+  const teamSites = dashboardData?.teamSites || [];
 
 
 
   const handleKpiClick = (kpiType: string) => {
     setSelectedKpi(kpiType);
   };
+
+  // Error boundary for graceful error handling
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <Card className="max-w-md">
+          <CardContent className="pt-6">
+            <div className="flex items-center space-x-2 text-red-600 mb-4">
+              <AlertCircle className="h-5 w-5" />
+              <h2 className="font-semibold">Unable to Load Dashboard</h2>
+            </div>
+            <p className="text-slate-600 mb-4">
+              There was a problem loading your dashboard data. Please try refreshing the page.
+            </p>
+            <Button onClick={() => window.location.reload()} className="w-full">
+              Refresh Page
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show loading skeleton while data is being fetched
+  if (isLoading) {
+    return (
+      <div className="flex h-screen bg-slate-50">
+        <div className="hidden lg:block">
+          <Sidebar />
+        </div>
+        <main className="flex-1 p-6">
+          <DashboardSkeleton />
+        </main>
+      </div>
+    );
+  }
 
   const renderKpiDetails = (kpiType: string) => {
     const mySitesCount = Array.isArray(mySites) ? mySites.length : 0;
@@ -152,7 +185,7 @@ export default function Dashboard() {
 
         <div className="flex-1 overflow-auto">
           <div className="p-4 lg:p-6 space-y-4 lg:space-y-6">
-            <StatsGrid stats={stats} isLoading={statsLoading} onKpiClick={handleKpiClick} />
+            <StatsGrid stats={stats} isLoading={false} onKpiClick={handleKpiClick} />
             
             {/* Sites Overview */}
             <Card>
@@ -174,9 +207,7 @@ export default function Dashboard() {
                   </TabsList>
                   
                   <TabsContent value="my-sites" className="space-y-4">
-                    {mySitesLoading ? (
-                      <div className="text-center py-8 text-slate-500">Loading your sites...</div>
-                    ) : Array.isArray(mySites) && mySites.length > 0 ? (
+                    {Array.isArray(mySites) && mySites.length > 0 ? (
                       <div className="grid gap-4">
                         {mySites.slice(0, 5).map((site: any) => (
                           <div key={site.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-slate-50">
@@ -214,9 +245,7 @@ export default function Dashboard() {
                   </TabsContent>
                   
                   <TabsContent value="team-sites" className="space-y-4">
-                    {teamSitesLoading ? (
-                      <div className="text-center py-8 text-slate-500">Loading team sites...</div>
-                    ) : Array.isArray(teamSites) && teamSites.length > 0 ? (
+                    {Array.isArray(teamSites) && teamSites.length > 0 ? (
                       <div className="grid gap-4">
                         {teamSites.slice(0, 5).map((item: any) => (
                           <div key={item.site.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-slate-50">
