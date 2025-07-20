@@ -9,7 +9,10 @@ export default function TemplatePreview() {
   const [, params] = useRoute('/preview/template/:id');
   const id = params?.id;
 
-  const { data: previewData, isLoading } = useQuery({
+  const { data: previewData, isLoading } = useQuery<{
+    template: any;
+    sampleData: any;
+  }>({
     queryKey: [`/preview/template/${id}`],
   });
 
@@ -167,7 +170,7 @@ export default function TemplatePreview() {
   }
 
   const template = previewData.template;
-  const sampleData = previewData.sampleData;
+  const sampleData = previewData.sampleData || {};
 
   return (
     <div className="min-h-screen bg-white">

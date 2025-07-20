@@ -9,11 +9,11 @@ export default function SiteViewer() {
   const [, params] = useRoute('/sites/:id');
   const id = params?.id;
 
-  const { data: site, isLoading } = useQuery({
+  const { data: site, isLoading } = useQuery<any>({
     queryKey: [`/api/sites/${id}`],
   });
 
-  const { data: templates } = useQuery({
+  const { data: templates } = useQuery<any[]>({
     queryKey: ['/api/templates'],
   });
 
