@@ -1,12 +1,15 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Upload, UserPlus, BarChart3 } from "lucide-react";
+import { useLocation } from "wouter";
 
 interface QuickActionsProps {
   onCreateSite: () => void;
 }
 
 export default function QuickActions({ onCreateSite }: QuickActionsProps) {
+  const [, setLocation] = useLocation();
+
   const actions = [
     {
       icon: Plus,
@@ -20,7 +23,7 @@ export default function QuickActions({ onCreateSite }: QuickActionsProps) {
       icon: Upload,
       title: "Upload Content",
       description: "Add new materials",
-      onClick: () => console.log("Upload content"),
+      onClick: () => setLocation("/content"),
       bgColor: "bg-success/10 group-hover:bg-success/20",
       iconColor: "text-success",
     },
@@ -28,7 +31,7 @@ export default function QuickActions({ onCreateSite }: QuickActionsProps) {
       icon: UserPlus,
       title: "Add Prospect",
       description: "Invite new contacts",
-      onClick: () => console.log("Add prospect"),
+      onClick: () => setLocation("/prospects"),
       bgColor: "bg-purple-100 group-hover:bg-purple-200",
       iconColor: "text-purple-600",
     },
@@ -36,7 +39,7 @@ export default function QuickActions({ onCreateSite }: QuickActionsProps) {
       icon: BarChart3,
       title: "View Analytics",
       description: "Track engagement",
-      onClick: () => console.log("View analytics"),
+      onClick: () => setLocation("/analytics"),
       bgColor: "bg-orange-100 group-hover:bg-orange-200",
       iconColor: "text-orange-600",
     },

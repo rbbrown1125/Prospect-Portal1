@@ -22,7 +22,7 @@ const navigation = [
 ];
 
 export default function Sidebar() {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const { user } = useAuth();
 
   return (
@@ -68,18 +68,18 @@ export default function Sidebar() {
       <div className="p-6 border-t border-slate-200">
         <div className="flex items-center space-x-3">
           <img
-            src={user?.profileImageUrl || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&h=100"}
+            src={(user as any)?.profileImageUrl || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&h=100"}
             alt="User profile"
             className="w-10 h-10 rounded-full object-cover"
           />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-slate-900 truncate">
-              {user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : 'User'}
+              {user ? `${(user as any).firstName || ''} ${(user as any).lastName || ''}`.trim() || (user as any).email : 'User'}
             </p>
             <p className="text-xs text-slate-500 truncate">Sales Manager</p>
           </div>
           <button
-            onClick={() => window.location.href = "/api/logout"}
+            onClick={() => setLocation("/profile")}
             className="text-slate-400 hover:text-slate-600"
           >
             <Settings className="h-4 w-4" />

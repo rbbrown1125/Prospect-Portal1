@@ -188,7 +188,44 @@ export function setupAuth(app: Express) {
       email: req.user.email,
       firstName: req.user.firstName,
       lastName: req.user.lastName,
+      phone: req.user.phone,
+      company: req.user.company,
+      title: req.user.title,
+      location: req.user.location,
+      profileImageUrl: req.user.profileImageUrl,
+      createdAt: req.user.createdAt,
+      updatedAt: req.user.updatedAt,
     });
+  });
+
+  // Update user profile endpoint
+  app.patch("/api/user/profile", async (req: any, res) => {
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+    try {
+      const userId = req.user.id;
+      const updates = req.body;
+      
+      // Only allow updating certain fields
+      const allowedFields = ['firstName', 'lastName', 'phone', 'company', 'title', 'location'];
+      const filteredUpdates = Object.keys(updates)
+        .filter(key => allowedFields.includes(key))
+        .reduce((obj: any, key) => {
+          obj[key] = updates[key];
+          return obj;
+        }, {});
+
+      const user = await storage.updateUser(userId, filteredUpdates);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.json(user);
+    } catch (error) {
+      console.error("Error updating user profile:", error);
+      res.status(500).json({ message: "Failed to update profile" });
+    }
   });
 }
 
