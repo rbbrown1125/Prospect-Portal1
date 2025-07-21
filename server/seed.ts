@@ -1,6 +1,9 @@
 import { db } from "./db";
 import { templates } from "@shared/schema";
 
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000;
+
 const sampleTemplates = [
   {
     name: "Secure Document Portal",
@@ -240,20 +243,46 @@ const sampleTemplates = [
   }
 ];
 
+async function delay(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function executeWithRetry<T>(fn: () => Promise<T>, retries = MAX_RETRIES): Promise<T> {
+  try {
+    return await fn();
+  } catch (error) {
+    if (retries > 0) {
+      console.log(`Database operation failed, retrying... (${retries} attempts remaining)`);
+      await delay(RETRY_DELAY);
+      return executeWithRetry(fn, retries - 1);
+    }
+    throw error;
+  }
+}
+
 export async function seedTemplates() {
   try {
-    const existingTemplates = await db.select().from(templates);
+    console.log("Checking for existing templates...");
+    
+    const existingTemplates = await executeWithRetry(() => 
+      db.select().from(templates)
+    );
+    
     if (existingTemplates.length > 0) {
       console.log("Templates already exist, skipping seed");
       return;
     }
     
+    console.log("Seeding templates...");
     for (const template of sampleTemplates) {
-      await db.insert(templates).values(template);
+      await executeWithRetry(() => 
+        db.insert(templates).values(template)
+      );
     }
     
     console.log("Templates seeded successfully!");
   } catch (error) {
     console.error("Error seeding templates:", error);
+    // Don't throw here - allow the app to continue running even if seeding fails
   }
 }
