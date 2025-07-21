@@ -19,7 +19,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FileText, Presentation, BarChart3, X, CheckCircle, ExternalLink, Copy, Plus } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { FileText, Presentation, BarChart3, X, CheckCircle, ExternalLink, Copy, Plus, Edit3, Type, Image, Trash2 } from "lucide-react";
 
 interface CreateSiteModalProps {
   isOpen: boolean;
@@ -38,6 +39,7 @@ export default function CreateSiteModal({ isOpen, onClose, preSelectedTemplateId
   const [accessPassword, setAccessPassword] = useState("");
   const [createdSite, setCreatedSite] = useState<any>(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [templateSections, setTemplateSections] = useState<any[]>([]);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -56,6 +58,37 @@ export default function CreateSiteModal({ isOpen, onClose, preSelectedTemplateId
       setSelectedTemplateId(preSelectedTemplateId);
     }
   }, [preSelectedTemplateId]);
+
+  // Load template sections when template is selected
+  useEffect(() => {
+    if (Array.isArray(templates) && selectedTemplateId) {
+      const template = templates.find((t: any) => t.id === selectedTemplateId);
+      
+      if (template?.content) {
+        let templateContent = template.content;
+        
+        // Parse template content if it's a string
+        if (typeof templateContent === 'string') {
+          try {
+            templateContent = JSON.parse(templateContent);
+          } catch (e) {
+            console.error('Failed to parse template content:', e);
+            templateContent = {};
+          }
+        }
+        
+        if (templateContent && typeof templateContent === 'object' && 'sections' in templateContent) {
+          const sectionsWithIds = (templateContent.sections as any[]).map((section, index) => ({
+            ...section,
+            id: section.id || `section-${index}`,
+          }));
+          setTemplateSections(sectionsWithIds);
+        } else {
+          setTemplateSections([]);
+        }
+      }
+    }
+  }, [templates, selectedTemplateId]);
 
   const createSiteMutation = useMutation({
     mutationFn: async (siteData: any) => {
@@ -111,6 +144,7 @@ export default function CreateSiteModal({ isOpen, onClose, preSelectedTemplateId
       prospectCompany,
       templateId: selectedTemplateId,
       accessPassword,
+      customContent: templateSections.length > 0 ? { sections: templateSections } : null,
       isActive: true,
     });
   };
@@ -126,6 +160,7 @@ export default function CreateSiteModal({ isOpen, onClose, preSelectedTemplateId
     setAccessPassword("");
     setCreatedSite(null);
     setShowSuccess(false);
+    setTemplateSections([]);
     onClose();
   };
 
@@ -412,6 +447,42 @@ export default function CreateSiteModal({ isOpen, onClose, preSelectedTemplateId
               </div>
             </div>
           </div>
+
+          {/* Template Sections Preview */}
+          {templateSections.length > 0 && (
+            <div>
+              <Label>Template Sections ({templateSections.length})</Label>
+              <div className="max-h-64 overflow-y-auto mt-2 border border-slate-200 rounded-lg">
+                <div className="divide-y divide-slate-100">
+                  {templateSections.map((section, index) => (
+                    <div key={section.id || index} className="p-3">
+                      <div className="flex items-start space-x-3">
+                        <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                          {section.type === 'hero' || section.type === 'cover' || section.type === 'header' ? <Type className="h-4 w-4 text-primary" /> :
+                           section.type === 'file_section' || section.type === 'file_gallery' ? <FileText className="h-4 w-4 text-primary" /> :
+                           <FileText className="h-4 w-4 text-primary" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium text-sm text-slate-900 truncate">
+                            {section.title || `${section.type} section`}
+                          </h4>
+                          <p className="text-xs text-slate-600 mt-1 line-clamp-2">
+                            {section.content || section.subtitle || 'No content'}
+                          </p>
+                          <span className="inline-block px-2 py-1 text-xs bg-slate-100 text-slate-700 rounded mt-1">
+                            {section.type}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <p className="text-xs text-slate-500 mt-2">
+                These sections will be included in your site. You can edit them after creation.
+              </p>
+            </div>
+          )}
 
             <div className="flex justify-end space-x-4 pt-4">
               <Button type="button" variant="outline" onClick={handleClose}>

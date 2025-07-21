@@ -98,7 +98,7 @@ export default function Auth() {
           <div className="flex items-center justify-center">
             <Card className="w-full max-w-md">
               <CardHeader className="text-center">
-                <CardTitle>Welcome to ProspectShare</CardTitle>
+                <CardTitle>Welcome to Infor CloudSuite Industrial Portal by Godlan</CardTitle>
                 <CardDescription>
                   Sign in to your account or create a new one
                 </CardDescription>

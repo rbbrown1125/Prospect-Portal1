@@ -427,7 +427,7 @@ export default function PublicSite() {
               <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
                 <Share2 className="text-white h-5 w-5" />
               </div>
-              <span className="text-xl font-bold text-slate-900">ProspectShare</span>
+              <span className="text-xl font-bold text-slate-900">Infor CloudSuite Industrial Portal by Godlan</span>
             </div>
           </div>
 

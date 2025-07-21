@@ -1,7 +1,7 @@
-# ProspectShare - Sales Prospect Site Builder
+# Infor CloudSuite Industrial Portal by Godlan - Sales Prospect Site Builder
 
 ## Overview
-ProspectShare is a web application that allows users to share file-focused content with sales prospects through individually generated, password-protected sites using customizable templates. The application emphasizes file sharing capabilities with easy prospect name and company variable editing, featuring a visual no-code editor, team collaboration, and comprehensive prospect management. Authentication is restricted to @godlan.com users with a Godlan-branded landing page.
+Infor CloudSuite Industrial Portal by Godlan is a web application that allows users to share file-focused content with sales prospects through individually generated, password-protected sites using customizable templates. The application emphasizes file sharing capabilities with easy prospect name and company variable editing, featuring a visual no-code editor, team collaboration, and comprehensive prospect management. Authentication is restricted to @godlan.com users with a Godlan-branded landing page.
 
 ## Project Architecture
 - **Frontend**: React.js with Wouter routing, Tailwind CSS, TypeScript

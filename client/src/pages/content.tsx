@@ -197,7 +197,7 @@ export default function Content() {
 
   // Combine content and files data
   const allItems = [
-    ...(content || []).map((item: any) => ({ 
+    ...(Array.isArray(content) ? content : []).map((item: any) => ({ 
       ...item, 
       source: 'content',
       displayName: item.name,
@@ -205,7 +205,7 @@ export default function Content() {
       displayType: item.type,
       url: item.fileUrl
     })),
-    ...(files || []).map((item: any) => ({ 
+    ...(Array.isArray(files) ? files : []).map((item: any) => ({ 
       ...item, 
       source: 'file',
       displayName: item.fileName || item.originalName,

@@ -9,9 +9,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
-import { ArrowLeft, Save, Eye, Edit3, Type, Image, FileText, Plus, Trash2, GripVertical } from 'lucide-react';
+import { ArrowLeft, Save, Eye, Edit3, Type, Image, FileText, Plus, Trash2, GripVertical, Upload, Link2, FolderOpen, Grid3X3, List, Columns, X } from 'lucide-react';
 import { isUnauthorizedError } from '@/lib/authUtils';
 import Sidebar from '@/components/sidebar';
 import { Site, Template } from '@shared/schema';
@@ -35,6 +37,17 @@ export default function SiteEdit() {
   const [templateName, setTemplateName] = useState('');
   const [templateDescription, setTemplateDescription] = useState('');
   const [templateCategory, setTemplateCategory] = useState('Custom');
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [showFileModal, setShowFileModal] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [fileUploadMode, setFileUploadMode] = useState<'upload' | 'library'>('library');
+  const [gridLayout, setGridLayout] = useState<any[]>([
+    { id: 'col-1', sections: [] },
+    { id: 'col-2', sections: [] }
+  ]);
+  const [layoutMode, setLayoutMode] = useState<'vertical' | 'grid'>('vertical');
+  const [draggedSection, setDraggedSection] = useState<any>(null);
+  const [editingSectionIndex, setEditingSectionIndex] = useState<number>(-1);
 
   const { data: site, isLoading } = useQuery<Site>({
     queryKey: ['/api/sites', params?.id],
@@ -43,6 +56,14 @@ export default function SiteEdit() {
 
   const { data: templates } = useQuery<Template[]>({
     queryKey: ['/api/templates'],
+  });
+
+  const { data: contentLibrary } = useQuery({
+    queryKey: ['/api/content'],
+  });
+
+  const { data: files } = useQuery({
+    queryKey: ['/api/files'],
   });
 
   useEffect(() => {
@@ -442,10 +463,51 @@ export default function SiteEdit() {
                     <div>
                       <CardTitle className="text-lg">Visual Content Editor</CardTitle>
                       <p className="text-sm text-slate-600">
-                        Drag and drop sections to rearrange, click to edit content
+                        {layoutMode === 'grid' 
+                          ? 'Drag sections between columns to create custom layouts'
+                          : 'Drag and drop sections to rearrange, click to edit content'
+                        }
                       </p>
                     </div>
                     <div className="flex items-center space-x-2">
+                      {/* Layout Mode Toggle */}
+                      <div className="flex items-center space-x-1 border rounded-md p-1">
+                        <Button
+                          variant={layoutMode === 'vertical' ? 'default' : 'ghost'}
+                          size="sm"
+                          onClick={() => setLayoutMode('vertical')}
+                          className="h-8 px-3"
+                        >
+                          <List className="h-4 w-4 mr-1" />
+                          Vertical
+                        </Button>
+                        <Button
+                          variant={layoutMode === 'grid' ? 'default' : 'ghost'}
+                          size="sm"
+                          onClick={() => setLayoutMode('grid')}
+                          className="h-8 px-3"
+                        >
+                          <Grid3X3 className="h-4 w-4 mr-1" />
+                          Grid
+                        </Button>
+                      </div>
+                      
+                      {layoutMode === 'grid' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setGridLayout([...gridLayout, { 
+                              id: `col-${Date.now()}`, 
+                              sections: [] 
+                            }]);
+                          }}
+                        >
+                          <Columns className="h-4 w-4 mr-2" />
+                          Add Column
+                        </Button>
+                      )}
+                      
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="outline" size="sm">
@@ -483,94 +545,207 @@ export default function SiteEdit() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-4">
-                      {templateSections.map((section, index) => (
-                        <Card 
-                          key={section.id || index} 
-                          className={`border-2 border-dashed transition-all duration-200 cursor-move ${
-                            draggedItem === index 
-                              ? 'border-primary bg-primary/5 opacity-50' 
-                              : draggedOver === index 
-                              ? 'border-primary/70 bg-primary/10' 
-                              : 'border-slate-200 hover:border-primary/50'
-                          }`}
-                          draggable
-                          onDragStart={(e) => handleDragStart(e, index)}
-                          onDragOver={(e) => handleDragOver(e, index)}
-                          onDragLeave={handleDragLeave}
-                          onDrop={(e) => handleDrop(e, index)}
-                          onDragEnd={handleDragEnd}
-                        >
-                          <CardContent className="p-4">
-                            <div className="flex items-start justify-between mb-3">
-                              <div className="flex items-center space-x-2">
-                                <GripVertical className="h-4 w-4 text-slate-400 cursor-grab active:cursor-grabbing" />
-                                {getSectionIcon(section.type)}
-                                <Badge variant="outline" className="text-xs">
-                                  {section.type.replace('_', ' ')}
-                                </Badge>
+                    {layoutMode === 'vertical' ? (
+                      /* Vertical Layout */
+                      <div className="space-y-4">
+                        {templateSections.map((section, index) => (
+                          <Card 
+                            key={section.id || index} 
+                            className={`border-2 border-dashed transition-all duration-200 cursor-move ${
+                              draggedItem === index 
+                                ? 'border-primary bg-primary/5 opacity-50' 
+                                : draggedOver === index 
+                                ? 'border-primary/70 bg-primary/10' 
+                                : 'border-slate-200 hover:border-primary/50'
+                            }`}
+                            draggable
+                            onDragStart={(e) => handleDragStart(e, index)}
+                            onDragOver={(e) => handleDragOver(e, index)}
+                            onDragLeave={handleDragLeave}
+                            onDrop={(e) => handleDrop(e, index)}
+                            onDragEnd={handleDragEnd}
+                          >
+                            <CardContent className="p-4">
+                              <div className="flex items-start justify-between mb-3">
+                                <div className="flex items-center space-x-2">
+                                  <GripVertical className="h-4 w-4 text-slate-400 cursor-grab active:cursor-grabbing" />
+                                  {getSectionIcon(section.type)}
+                                  <Badge variant="outline" className="text-xs">
+                                    {section.type.replace('_', ' ')}
+                                  </Badge>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleSectionEdit(section, index);
+                                    }}
+                                  >
+                                    <Edit3 className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleSectionDelete(index);
+                                    }}
+                                    className="text-red-600 hover:text-red-700"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
                               </div>
-                              <div className="flex items-center space-x-2">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleSectionEdit(section, index);
-                                  }}
-                                >
-                                  <Edit3 className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleSectionDelete(index);
-                                  }}
-                                  className="text-red-600 hover:text-red-700"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
+                              {renderSectionPreview(section)}
+                            </CardContent>
+                          </Card>
+                        ))}
+                        
+                        {templateSections.length === 0 && (
+                          <div className="text-center py-12 border-2 border-dashed border-slate-200 rounded-lg">
+                            <Type className="h-8 w-8 text-slate-400 mx-auto mb-4" />
+                            <h3 className="text-lg font-medium text-slate-900 mb-2">No sections yet</h3>
+                            <p className="text-slate-600 mb-4">Add your first section to start building your site</p>
+                            <div className="flex justify-center space-x-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleSectionAdd('hero')}
+                              >
+                                <Type className="h-4 w-4 mr-2" />
+                                Hero Section
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleSectionAdd('file_section')}
+                              >
+                                <FileText className="h-4 w-4 mr-2" />
+                                File Section
+                              </Button>
                             </div>
-                            {renderSectionPreview(section)}
-                          </CardContent>
-                        </Card>
-                      ))}
-                      
-                      {templateSections.length === 0 && (
-                        <div className="text-center py-12 border-2 border-dashed border-slate-200 rounded-lg">
-                          <Type className="h-8 w-8 text-slate-400 mx-auto mb-4" />
-                          <h3 className="text-lg font-medium text-slate-900 mb-2">No sections yet</h3>
-                          <p className="text-slate-600 mb-4">Add your first section to start building your site</p>
-                          <div className="flex justify-center space-x-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleSectionAdd('hero')}
-                            >
-                              <Type className="h-4 w-4 mr-2" />
-                              Hero Section
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleSectionAdd('file_section')}
-                            >
-                              <FileText className="h-4 w-4 mr-2" />
-                              File Section
-                            </Button>
                           </div>
-                        </div>
-                      )}
-                    </div>
+                        )}
+                      </div>
+                    ) : (
+                      /* Grid Layout */
+                      <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${gridLayout.length}, 1fr)` }}>
+                        {gridLayout.map((column, colIndex) => (
+                          <div key={column.id} className="min-h-64">
+                            <div className="flex items-center justify-between mb-2">
+                              <Badge variant="outline" className="text-xs">
+                                Column {colIndex + 1}
+                              </Badge>
+                              {gridLayout.length > 1 && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    const newLayout = gridLayout.filter((_, index) => index !== colIndex);
+                                    setGridLayout(newLayout);
+                                  }}
+                                  className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              )}
+                            </div>
+                            <div
+                              className="min-h-48 p-4 border-2 border-dashed border-slate-200 rounded-lg space-y-4"
+                              onDragOver={(e) => {
+                                e.preventDefault();
+                                e.currentTarget.classList.add('border-primary', 'bg-primary/5');
+                              }}
+                              onDragLeave={(e) => {
+                                e.currentTarget.classList.remove('border-primary', 'bg-primary/5');
+                              }}
+                              onDrop={(e) => {
+                                e.preventDefault();
+                                e.currentTarget.classList.remove('border-primary', 'bg-primary/5');
+                                
+                                if (draggedSection) {
+                                  // Move section to this column
+                                  const newGridLayout = [...gridLayout];
+                                  
+                                  // Remove from current location
+                                  newGridLayout.forEach(col => {
+                                    col.sections = col.sections.filter((s: any) => s.id !== draggedSection.id);
+                                  });
+                                  
+                                  // Add to target column
+                                  newGridLayout[colIndex].sections.push(draggedSection);
+                                  setGridLayout(newGridLayout);
+                                  setDraggedSection(null);
+                                }
+                              }}
+                            >
+                              {column.sections.map((section: any, sectionIndex: number) => (
+                                <Card key={section.id} className="border border-slate-300">
+                                  <CardContent className="p-3">
+                                    <div className="flex items-start justify-between mb-2">
+                                      <div className="flex items-center space-x-2">
+                                        <GripVertical 
+                                          className="h-4 w-4 text-slate-400 cursor-grab"
+                                          draggable
+                                          onDragStart={() => setDraggedSection(section)}
+                                        />
+                                        {getSectionIcon(section.type)}
+                                        <Badge variant="outline" className="text-xs">
+                                          {section.type.replace('_', ' ')}
+                                        </Badge>
+                                      </div>
+                                      <div className="flex items-center space-x-1">
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => {
+                                            setEditingSection({ ...section, columnIndex: colIndex, sectionIndex });
+                                            setEditingSectionIndex(sectionIndex);
+                                          }}
+                                          className="h-6 w-6 p-0"
+                                        >
+                                          <Edit3 className="h-3 w-3" />
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => {
+                                            const newGridLayout = [...gridLayout];
+                                            newGridLayout[colIndex].sections.splice(sectionIndex, 1);
+                                            setGridLayout(newGridLayout);
+                                          }}
+                                          className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
+                                        >
+                                          <Trash2 className="h-3 w-3" />
+                                        </Button>
+                                      </div>
+                                    </div>
+                                    {renderSectionPreview(section)}
+                                  </CardContent>
+                                </Card>
+                              ))}
+                              
+                              {column.sections.length === 0 && (
+                                <div className="text-center py-8">
+                                  <Type className="h-6 w-6 text-slate-400 mx-auto mb-2" />
+                                  <p className="text-sm text-slate-500">
+                                    Drag sections here or add new ones
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
 
                 {/* Section Editor Modal */}
                 {editingSection && (
-                  <Card className="border-primary">
+                  <Card className="border-primary mt-6">
                     <CardHeader>
                       <CardTitle className="text-lg">
                         Edit {editingSection.type.replace('_', ' ')} Section
@@ -580,7 +755,7 @@ export default function SiteEdit() {
                       <div>
                         <Label>Section Title</Label>
                         <Input
-                          value={editingSection.title}
+                          value={editingSection.title || ''}
                           onChange={(e) => setEditingSection({
                             ...editingSection,
                             title: e.target.value
@@ -589,24 +764,10 @@ export default function SiteEdit() {
                         />
                       </div>
                       
-                      {editingSection.type === 'hero' && (
-                        <div>
-                          <Label>Subtitle</Label>
-                          <Input
-                            value={editingSection.subtitle || ''}
-                            onChange={(e) => setEditingSection({
-                              ...editingSection,
-                              subtitle: e.target.value
-                            })}
-                            placeholder="Enter subtitle"
-                          />
-                        </div>
-                      )}
-                      
                       <div>
                         <Label>Content</Label>
                         <Textarea
-                          value={editingSection.content}
+                          value={editingSection.content || ''}
                           onChange={(e) => setEditingSection({
                             ...editingSection,
                             content: e.target.value
@@ -624,7 +785,15 @@ export default function SiteEdit() {
                           Cancel
                         </Button>
                         <Button
-                          onClick={() => handleSectionUpdate(editingSection)}
+                          onClick={() => {
+                            const newSections = [...templateSections];
+                            const index = newSections.findIndex(s => s.id === editingSection.id);
+                            if (index !== -1) {
+                              newSections[index] = editingSection;
+                              setTemplateSections(newSections);
+                            }
+                            setEditingSection(null);
+                          }}
                         >
                           Save Changes
                         </Button>

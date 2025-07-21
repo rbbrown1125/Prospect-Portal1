@@ -15,7 +15,7 @@ export default function Landing() {
             <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center">
               <Share className="text-white h-6 w-6" />
             </div>
-            <h1 className="text-4xl font-bold text-slate-900">ProspectShare</h1>
+            <h1 className="text-4xl font-bold text-slate-900">Infor CloudSuite Industrial Portal by Godlan</h1>
           </div>
           <p className="text-xl text-slate-600 mb-8 max-w-2xl mx-auto">
             Create templated, login-protected sites to share sales content with individual prospects. 
