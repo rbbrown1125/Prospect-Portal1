@@ -7,6 +7,7 @@ import { promisify } from "util";
 import { storage } from "./storage";
 import { User, InsertUser } from "@shared/schema";
 import connectPg from "connect-pg-simple";
+import { upload, processProfilePicture, deleteOldProfilePicture } from "./upload";
 
 declare global {
   namespace Express {
@@ -15,6 +16,13 @@ declare global {
       email: string;
       firstName?: string | null;
       lastName?: string | null;
+      phone?: string | null;
+      company?: string | null;
+      title?: string | null;
+      location?: string | null;
+      profileImageUrl?: string | null;
+      createdAt?: Date | null;
+      updatedAt?: Date | null;
     }
   }
 }
@@ -225,6 +233,51 @@ export function setupAuth(app: Express) {
     } catch (error) {
       console.error("Error updating user profile:", error);
       res.status(500).json({ message: "Failed to update profile" });
+    }
+  });
+
+  // Upload profile picture endpoint
+  app.post("/api/user/profile-picture", upload.single('profilePicture'), async (req: any, res) => {
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      const userId = req.user.id;
+      
+      // Get current user data to check for existing profile picture
+      const currentUser = await storage.getUser(userId);
+      
+      // Process and save the new profile picture
+      const profileImageUrl = await processProfilePicture(
+        req.file.buffer,
+        userId,
+        req.file.originalname
+      );
+      
+      // Delete old profile picture if it exists
+      if (currentUser?.profileImageUrl) {
+        await deleteOldProfilePicture(currentUser.profileImageUrl);
+      }
+      
+      // Update user with new profile picture URL
+      const updatedUser = await storage.updateUser(userId, { profileImageUrl });
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.json({ 
+        profileImageUrl,
+        message: "Profile picture updated successfully" 
+      });
+    } catch (error) {
+      console.error("Error uploading profile picture:", error);
+      res.status(500).json({ message: "Failed to upload profile picture" });
     }
   });
 }

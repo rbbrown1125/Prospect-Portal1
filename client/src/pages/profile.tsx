@@ -25,7 +25,8 @@ import {
   Monitor,
   Menu,
   Save,
-  LogOut
+  LogOut,
+  Camera
 } from "lucide-react";
 
 export default function ProfilePage() {
@@ -85,12 +86,73 @@ export default function ProfilePage() {
     },
   });
 
+  const uploadProfilePictureMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('profilePicture', file);
+      
+      const res = await fetch('/api/user/profile-picture', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+      
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || 'Upload failed');
+      }
+      
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+      toast({
+        title: "Profile picture updated",
+        description: "Your profile picture has been successfully updated.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Upload failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSave = () => {
     updateProfileMutation.mutate(formData);
   };
 
   const handleLogout = () => {
     window.location.href = "/api/logout";
+  };
+
+  const handleProfilePictureChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "Invalid file type",
+          description: "Please select an image file.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Validate file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: "Please select an image smaller than 5MB.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      uploadProfilePictureMutation.mutate(file);
+    }
   };
 
   if (isLoading) {
@@ -176,12 +238,26 @@ export default function ProfilePage() {
             <Card>
               <CardContent className="pt-6">
                 <div className="flex items-center space-x-6">
-                  <Avatar className="h-20 w-20">
-                    <AvatarImage src={(user as any)?.profileImageUrl} />
-                    <AvatarFallback className="text-lg">
-                      {(user as any)?.firstName?.[0] || 'U'}{(user as any)?.lastName?.[0] || 'S'}
-                    </AvatarFallback>
-                  </Avatar>
+                  <div className="relative">
+                    <Avatar className="h-20 w-20">
+                      <AvatarImage src={(user as any)?.profileImageUrl} />
+                      <AvatarFallback className="text-lg">
+                        {(user as any)?.firstName?.[0] || 'U'}{(user as any)?.lastName?.[0] || 'S'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleProfilePictureChange}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      disabled={uploadProfilePictureMutation.isPending}
+                    />
+                    {uploadProfilePictureMutation.isPending && (
+                      <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                      </div>
+                    )}
+                  </div>
                   <div className="flex-1">
                     <div className="flex items-center space-x-3">
                       <h1 className="text-2xl font-bold">
@@ -193,6 +269,7 @@ export default function ProfilePage() {
                       </Badge>
                     </div>
                     <p className="text-slate-600 mt-1">{(user as any)?.email}</p>
+                    <p className="text-xs text-slate-400 mt-1">Click profile picture to change</p>
                     <p className="text-sm text-slate-500 mt-2">
                       <Calendar className="h-4 w-4 inline mr-1" />
                       Member since {(user as any)?.createdAt ? new Date((user as any).createdAt).toLocaleDateString() : 'Unknown'}
