@@ -492,7 +492,7 @@ export default function PublicSite() {
     );
   }
 
-  const template = templates && Array.isArray(templates) ? templates.find((t: any) => t.id === site.templateId) : null;
+  const template = site?.template || null;
   
   // Parse template content if it's a string
   let templateContent = template?.content;
