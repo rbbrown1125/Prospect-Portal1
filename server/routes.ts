@@ -343,9 +343,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Template not found" });
       }
       
-      // Create sample data for the template
+      // Create comprehensive sample data for the template
       const sampleData = {
+        // Prospect information
+        prospect_name: "John Smith",
+        company_name: "Acme Corporation", 
         company: "Acme Corporation",
+        
+        // Contact information
+        contact_name: "Sarah Johnson",
+        contact_email: "sarah.johnson@example.com",
+        contact_phone: "(555) 123-4567",
+        
+        // File/Document names
+        proposal_doc: "Acme-Custom-Proposal-2025.pdf",
+        case_study: "ROI-Analysis-Similar-Company.pdf",
+        pricing_sheet: "Acme-Pricing-Breakdown.xlsx",
+        main_proposal: "Complete-Business-Proposal.pdf",
+        technical_specs: "Technical-Implementation-Guide.pdf",
+        video_presentation: "Executive-Summary-Presentation.mp4",
+        implementation_plan: "Project-Timeline-Roadmap.pdf",
+        brand_guidelines: "Acme-Brand-Style-Guide.pdf",
+        
+        // Business details
         tagline: "Innovative Solutions for Modern Business",
         problem_statement: "Businesses struggle with outdated processes that limit growth and efficiency.",
         solution_details: "Our cutting-edge platform streamlines operations and drives measurable results.",
@@ -354,10 +374,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         feature_3: "Automated Workflow Management",
         pricing_info: "Starting at $99/month with flexible scaling options",
         call_to_action: "Schedule a demo to see how we can transform your business",
+        
+        // Product information
         product_name: "ProSuite Platform",
         product_tagline: "The complete business automation solution",
         startup_name: "TechFlow Solutions",
-        elevator_pitch: "Revolutionizing business processes through AI-powered automation"
+        elevator_pitch: "Revolutionizing business processes through AI-powered automation",
+        
+        // Usage and support
+        usage_scope: "enterprise",
+        tech_support: "support@techflow.com",
+        
+        // Additional variables
+        deadline: "March 30, 2025",
+        budget_range: "$50,000 - $100,000",
+        team_size: "15-20 employees",
+        industry: "Manufacturing"
       };
       
       res.json({

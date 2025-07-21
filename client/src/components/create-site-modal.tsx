@@ -12,7 +12,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { FileText, Presentation, BarChart3, X, CheckCircle, ExternalLink, Copy } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { FileText, Presentation, BarChart3, X, CheckCircle, ExternalLink, Copy, Plus } from "lucide-react";
 
 interface CreateSiteModalProps {
   isOpen: boolean;
@@ -22,6 +29,8 @@ interface CreateSiteModalProps {
 
 export default function CreateSiteModal({ isOpen, onClose, preSelectedTemplateId }: CreateSiteModalProps) {
   const [siteName, setSiteName] = useState("");
+  const [selectedProspectId, setSelectedProspectId] = useState<string>("");
+  const [isNewProspect, setIsNewProspect] = useState(true);
   const [prospectName, setProspectName] = useState("");
   const [prospectEmail, setProspectEmail] = useState("");
   const [prospectCompany, setProspectCompany] = useState("");
@@ -35,6 +44,10 @@ export default function CreateSiteModal({ isOpen, onClose, preSelectedTemplateId
 
   const { data: templates } = useQuery({
     queryKey: ['/api/templates'],
+  });
+
+  const { data: prospects } = useQuery({
+    queryKey: ['/api/prospects'],
   });
 
   // Update selected template when preSelectedTemplateId changes
@@ -104,6 +117,8 @@ export default function CreateSiteModal({ isOpen, onClose, preSelectedTemplateId
 
   const handleClose = () => {
     setSiteName("");
+    setSelectedProspectId("");
+    setIsNewProspect(true);
     setProspectName("");
     setProspectEmail("");
     setProspectCompany("");
@@ -262,25 +277,98 @@ export default function CreateSiteModal({ isOpen, onClose, preSelectedTemplateId
           
           <div>
             <Label>Prospect Information</Label>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
-              <Input
-                value={prospectName}
-                onChange={(e) => setProspectName(e.target.value)}
-                placeholder="Prospect name"
-                required
-              />
-              <Input
-                type="email"
-                value={prospectEmail}
-                onChange={(e) => setProspectEmail(e.target.value)}
-                placeholder="Prospect email"
-                required
-              />
-              <Input
-                value={prospectCompany}
-                onChange={(e) => setProspectCompany(e.target.value)}
-                placeholder="Company name"
-              />
+            <div className="space-y-4 mt-2">
+              {/* Prospect Selection Toggle */}
+              <div className="flex items-center space-x-4">
+                <Button
+                  type="button"
+                  variant={!isNewProspect ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => {
+                    setIsNewProspect(false);
+                    setProspectName("");
+                    setProspectEmail("");
+                    setProspectCompany("");
+                  }}
+                >
+                  Select Existing Prospect
+                </Button>
+                <Button
+                  type="button"
+                  variant={isNewProspect ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => {
+                    setIsNewProspect(true);
+                    setSelectedProspectId("");
+                  }}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create New Prospect
+                </Button>
+              </div>
+
+              {!isNewProspect ? (
+                /* Existing Prospect Dropdown */
+                <div>
+                  <Select
+                    value={selectedProspectId}
+                    onValueChange={(value) => {
+                      setSelectedProspectId(value);
+                      const selectedProspect = Array.isArray(prospects) ? 
+                        prospects.find((p: any) => p.id === value) : null;
+                      if (selectedProspect) {
+                        setProspectName(selectedProspect.name);
+                        setProspectEmail(selectedProspect.email);
+                        setProspectCompany(selectedProspect.company || "");
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a prospect..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.isArray(prospects) && prospects.length > 0 ? (
+                        prospects.map((prospect: any) => (
+                          <SelectItem key={prospect.id} value={prospect.id}>
+                            <div className="flex flex-col items-start">
+                              <span className="font-medium">{prospect.name}</span>
+                              <span className="text-sm text-muted-foreground">
+                                {prospect.email} {prospect.company && `• ${prospect.company}`}
+                              </span>
+                            </div>
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="no-prospects" disabled>
+                          No prospects available
+                        </SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : (
+                /* New Prospect Form */
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Input
+                    value={prospectName}
+                    onChange={(e) => setProspectName(e.target.value)}
+                    placeholder="Prospect name"
+                    required
+                  />
+                  <Input
+                    type="email"
+                    value={prospectEmail}
+                    onChange={(e) => setProspectEmail(e.target.value)}
+                    placeholder="Prospect email"
+                    required
+                  />
+                  <Input
+                    value={prospectCompany}
+                    onChange={(e) => setProspectCompany(e.target.value)}
+                    placeholder="Company name"
+                  />
+                </div>
+              )}
             </div>
           </div>
 

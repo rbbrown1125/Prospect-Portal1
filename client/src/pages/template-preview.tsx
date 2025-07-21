@@ -204,13 +204,62 @@ export default function TemplatePreview() {
 
       {/* Template content */}
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <div className="space-y-8">
-          {template.content?.sections?.map((section: any, index: number) => (
-            <div key={index}>
-              {renderSection(section, sampleData)}
-            </div>
-          ))}
-        </div>
+        {template.content?.sections && Array.isArray(template.content.sections) && template.content.sections.length > 0 ? (
+          <div className="space-y-8">
+            {template.content.sections.map((section: any, index: number) => (
+              <div key={index}>
+                {renderSection(section, sampleData)}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-16">
+            <h2 className="text-xl font-semibold text-slate-900 mb-4">Template Content Not Available</h2>
+            <p className="text-slate-600 mb-4">
+              This template doesn't have proper section data configured.
+            </p>
+            <Card className="max-w-2xl mx-auto">
+              <CardHeader>
+                <CardTitle className="text-left">Template Information</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4 text-left">
+                  <div>
+                    <strong>Name:</strong> {template.name}
+                  </div>
+                  <div>
+                    <strong>Description:</strong> {template.description || 'No description available'}
+                  </div>
+                  <div>
+                    <strong>Category:</strong> {template.category}
+                  </div>
+                  <div>
+                    <strong>Content Structure:</strong>
+                    <div className="mt-2 p-3 bg-slate-50 rounded text-sm">
+                      {template.content ? (
+                        typeof template.content === 'object' ? (
+                          <div>
+                            <div>Type: Object</div>
+                            <div>Keys: {Object.keys(template.content).join(', ')}</div>
+                            {template.content.sections ? (
+                              <div>Sections: {Array.isArray(template.content.sections) ? template.content.sections.length : 'Invalid sections format'}</div>
+                            ) : (
+                              <div className="text-orange-600">Missing 'sections' property</div>
+                            )}
+                          </div>
+                        ) : (
+                          <div>Raw content (String): {typeof template.content}</div>
+                        )
+                      ) : (
+                        <div className="text-red-600">No content data</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Footer */}
         <div className="mt-16 py-8 border-t border-slate-200 text-center">
