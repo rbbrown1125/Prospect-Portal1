@@ -29,8 +29,24 @@ export default function SiteEdit() {
   const [prospectEmail, setProspectEmail] = useState('');
   const [password, setPassword] = useState('');
   const [customContent, setCustomContent] = useState('');
-  const [templateSections, setTemplateSections] = useState<any[]>([]);
-  const [editingSection, setEditingSection] = useState<any>(null);
+  // Better type definitions for improved type safety
+  interface SectionData {
+    id: string;
+    type: string;
+    title: string;
+    content?: string;
+    subtitle?: string;
+    files?: any[];
+    categories?: any[];
+  }
+
+  interface GridColumn {
+    id: string;
+    sections: SectionData[];
+  }
+
+  const [templateSections, setTemplateSections] = useState<SectionData[]>([]);
+  const [editingSection, setEditingSection] = useState<SectionData | null>(null);
   const [draggedItem, setDraggedItem] = useState<number | null>(null);
   const [draggedOver, setDraggedOver] = useState<number | null>(null);
   const [showSaveAsTemplate, setShowSaveAsTemplate] = useState(false);
@@ -41,12 +57,12 @@ export default function SiteEdit() {
   const [showFileModal, setShowFileModal] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileUploadMode, setFileUploadMode] = useState<'upload' | 'library'>('library');
-  const [gridLayout, setGridLayout] = useState<any[]>([
+  const [gridLayout, setGridLayout] = useState<GridColumn[]>([
     { id: 'col-1', sections: [] },
     { id: 'col-2', sections: [] }
   ]);
   const [layoutMode, setLayoutMode] = useState<'vertical' | 'grid'>('vertical');
-  const [draggedSection, setDraggedSection] = useState<any>(null);
+  const [draggedSection, setDraggedSection] = useState<SectionData | null>(null);
   const [editingSectionIndex, setEditingSectionIndex] = useState<number>(-1);
 
   const { data: site, isLoading } = useQuery<Site>({
@@ -171,13 +187,15 @@ export default function SiteEdit() {
     });
   };
 
-  const handleSectionEdit = (section: any, index: number) => {
-    setEditingSection({ ...section, index });
+  const handleSectionEdit = (section: SectionData, index: number) => {
+    setEditingSection({ ...section, index } as any);
   };
 
-  const handleSectionUpdate = (updatedSection: any) => {
+  const handleSectionUpdate = (updatedSection: SectionData) => {
+    if (!editingSection || !('index' in editingSection)) return;
+    
     const newSections = [...templateSections];
-    newSections[editingSection.index] = updatedSection;
+    newSections[(editingSection as any).index] = updatedSection;
     setTemplateSections(newSections);
     setEditingSection(null);
   };
@@ -188,13 +206,22 @@ export default function SiteEdit() {
   };
 
   const handleSectionAdd = (type: string) => {
-    const newSection = {
+    const newSection: SectionData = {
       type,
       title: 'New Section',
       content: 'Enter your content here...',
-      id: Date.now().toString(),
+      id: `section-${Date.now()}`,
     };
-    setTemplateSections([...templateSections, newSection]);
+    
+    if (layoutMode === 'grid' && gridLayout.length > 0) {
+      // Add to first column in grid mode
+      const newGridLayout = [...gridLayout];
+      newGridLayout[0].sections.push(newSection);
+      setGridLayout(newGridLayout);
+    } else {
+      // Add to vertical layout
+      setTemplateSections([...templateSections, newSection]);
+    }
   };
 
   const handleDragStart = (e: React.DragEvent, index: number) => {
@@ -686,11 +713,13 @@ export default function SiteEdit() {
                                   <CardContent className="p-3">
                                     <div className="flex items-start justify-between mb-2">
                                       <div className="flex items-center space-x-2">
-                                        <GripVertical 
+                                        <div
                                           className="h-4 w-4 text-slate-400 cursor-grab"
                                           draggable
                                           onDragStart={() => setDraggedSection(section)}
-                                        />
+                                        >
+                                          <GripVertical className="h-4 w-4" />
+                                        </div>
                                         {getSectionIcon(section.type)}
                                         <Badge variant="outline" className="text-xs">
                                           {section.type.replace('_', ' ')}
