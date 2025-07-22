@@ -17,6 +17,9 @@ import SiteViewer from "@/pages/site-viewer";
 import PublicSite from "@/pages/public-site";
 import Profile from "@/pages/profile";
 import Admin from "@/pages/admin";
+import AccessCode from "@/pages/access-code";
+import Onboard from "@/pages/onboard";
+import VerifyEmail from "@/pages/verify-email";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -50,6 +53,9 @@ function Router() {
           <Route path="/prospects" component={Prospects} />
           <Route path="/profile" component={Profile} />
           <Route path="/admin" component={Admin} />
+          <Route path="/access-code" component={AccessCode} />
+          <Route path="/onboard/:accessCode" component={Onboard} />
+          <Route path="/verify-email/:token" component={VerifyEmail} />
           <Route path="/preview/template/:id" component={TemplatePreview} />
           <Route path="/site/:id" component={PublicSite} />
         </>

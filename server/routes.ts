@@ -200,6 +200,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin route to generate access code for a site
+  app.post('/api/sites/:id/generate-access-code', requireAdmin, async (req: any, res) => {
+    try {
+      const siteId = req.params.id;
+      const { welcomeMessage } = req.body;
+      
+      // Validate UUID format
+      if (!siteId || siteId === 'undefined' || !isValidUUID(siteId)) {
+        return res.status(400).json({ message: "Invalid site ID format" });
+      }
+      
+      // Check if site exists
+      const site = await storage.getPublicSite(siteId);
+      if (!site) {
+        return res.status(404).json({ message: "Site not found" });
+      }
+      
+      // Generate access code
+      const accessCode = await storage.generateAccessCode(siteId);
+      
+      // Update welcome message if provided
+      if (welcomeMessage) {
+        await storage.updateSite(siteId, req.user.id, { welcomeMessage }, req.user.role);
+      }
+      
+      res.json({
+        success: true,
+        accessCode,
+        message: "Access code generated successfully"
+      });
+    } catch (error) {
+      console.error("Error generating access code:", error);
+      res.status(500).json({ message: "Failed to generate access code" });
+    }
+  });
+
   app.post('/api/templates', requireAuth, async (req, res) => {
     try {
       const templateData = insertTemplateSchema.parse(req.body);

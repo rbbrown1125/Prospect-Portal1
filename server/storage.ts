@@ -6,6 +6,7 @@ import {
   siteViews,
   prospects,
   files,
+  userInvitations,
   type User,
   type InsertUser,
   type Site,
@@ -19,6 +20,8 @@ import {
   type InsertProspect,
   type File,
   type InsertFile,
+  type UserInvitation,
+  type InsertUserInvitation,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, count, sql, and, ne, or } from "drizzle-orm";
@@ -68,6 +71,20 @@ export interface IStorage {
   // Analytics operations
   getSiteAnalytics(siteId: string, userId: string): Promise<any>;
   recordSiteView(viewData: InsertSiteView): Promise<void>;
+
+  // Access code and user invitation operations
+  generateAccessCode(siteId: string): Promise<string>;
+  validateAccessCode(accessCode: string): Promise<Site | undefined>;
+  createUserInvitation(invitation: InsertUserInvitation): Promise<UserInvitation>;
+  getUserInvitationByAccessCode(accessCode: string): Promise<UserInvitation | undefined>;
+  updateUserInvitation(invitationId: string, updates: Partial<UserInvitation>): Promise<UserInvitation | undefined>;
+  registerUserFromInvitation(invitationId: string, userId: string): Promise<void>;
+  getUserInvitationByVerificationToken(token: string): Promise<UserInvitation | undefined>;
+  updateUserPassword(userId: string, hashedPassword: string): Promise<User | undefined>;
+
+  // Admin operations
+  getAllUsers(): Promise<User[]>;
+  getAllSites(): Promise<Site[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -225,10 +242,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async authenticateProspectSite(siteId: string, password: string): Promise<Site | undefined> {
-    const [site] = await db.select().from(sites).where(eq(sites.id, siteId));
-    if (site && (!site.accessPassword || site.accessPassword === password)) {
-      return site;
-    }
+    // This method is deprecated - we now use access codes instead of passwords
+    // Kept for backward compatibility, but returns undefined as we no longer use passwords
     return undefined;
   }
 
@@ -325,6 +340,96 @@ export class DatabaseStorage implements IStorage {
       .delete(files)
       .where(and(eq(files.id, fileId), eq(files.userId, userId)));
     return (result.rowCount || 0) > 0;
+  }
+
+  // Access code and user invitation operations
+  async generateAccessCode(siteId: string): Promise<string> {
+    // Generate a unique 8-character access code
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let accessCode = '';
+    
+    for (let i = 0; i < 8; i++) {
+      accessCode += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    
+    // Update the site with the access code
+    await db
+      .update(sites)
+      .set({ accessCode, updatedAt: new Date() })
+      .where(eq(sites.id, siteId));
+    
+    return accessCode;
+  }
+
+  async validateAccessCode(accessCode: string): Promise<Site | undefined> {
+    const [site] = await db
+      .select()
+      .from(sites)
+      .where(and(eq(sites.accessCode, accessCode), eq(sites.isActive, true)));
+    return site;
+  }
+
+  async createUserInvitation(invitation: InsertUserInvitation): Promise<UserInvitation> {
+    const [newInvitation] = await db
+      .insert(userInvitations)
+      .values(invitation)
+      .returning();
+    return newInvitation;
+  }
+
+  async getUserInvitationByAccessCode(accessCode: string): Promise<UserInvitation | undefined> {
+    const [invitation] = await db
+      .select()
+      .from(userInvitations)
+      .where(eq(userInvitations.accessCode, accessCode));
+    return invitation;
+  }
+
+  async updateUserInvitation(invitationId: string, updates: Partial<UserInvitation>): Promise<UserInvitation | undefined> {
+    const [updatedInvitation] = await db
+      .update(userInvitations)
+      .set({ ...updates })
+      .where(eq(userInvitations.id, invitationId))
+      .returning();
+    return updatedInvitation;
+  }
+
+  async registerUserFromInvitation(invitationId: string, userId: string): Promise<void> {
+    await db
+      .update(userInvitations)
+      .set({ 
+        registeredUserId: userId, 
+        status: 'registered',
+        registeredAt: new Date()
+      })
+      .where(eq(userInvitations.id, invitationId));
+  }
+
+  async getUserInvitationByVerificationToken(token: string): Promise<UserInvitation | undefined> {
+    const [invitation] = await db
+      .select()
+      .from(userInvitations)
+      .where(eq(userInvitations.verificationToken, token))
+      .limit(1);
+    return invitation;
+  }
+
+  async updateUserPassword(userId: string, hashedPassword: string): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set({ password: hashedPassword })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+
+  // Admin operations
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  async getAllSites(): Promise<Site[]> {
+    return await db.select().from(sites).orderBy(desc(sites.createdAt));
   }
 }
 

@@ -55,7 +55,7 @@ export const templates = pgTable("templates", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Prospect sites
+// Prospect sites with unique access code system
 export const sites = pgTable("sites", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: varchar("name").notNull(),
@@ -66,7 +66,8 @@ export const sites = pgTable("sites", {
   prospectCompany: varchar("prospect_company"),
   customContent: jsonb("custom_content"),
   isActive: boolean("is_active").default(true),
-  accessPassword: varchar("access_password"),
+  accessCode: varchar("access_code", { length: 50 }).unique(), // Unique access code for user registration
+  welcomeMessage: text("welcome_message"), // Custom welcome message for new users
   views: integer("views").default(0),
   lastAccessed: timestamp("last_accessed"),
   createdBy: varchar("created_by").references(() => users.id),
@@ -74,6 +75,22 @@ export const sites = pgTable("sites", {
   sharedWith: text("shared_with").array(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// User invitations for access code registration
+export const userInvitations = pgTable("user_invitations", {
+  id: text("id").primaryKey().notNull().$defaultFn(() => nanoid()),
+  email: varchar("email", { length: 255 }).notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  title: varchar("title", { length: 255 }),
+  siteId: uuid("site_id").notNull().references(() => sites.id),
+  accessCode: varchar("access_code", { length: 50 }).notNull(),
+  status: varchar("status", { length: 50 }).default("pending").notNull(), // pending, registered, verified
+  verificationToken: text("verification_token"),
+  registeredUserId: varchar("registered_user_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  registeredAt: timestamp("registered_at"),
+  verifiedAt: timestamp("verified_at"),
 });
 
 // Content library for uploads
@@ -143,6 +160,9 @@ export type SiteView = typeof siteViews.$inferSelect;
 
 export type InsertProspect = typeof prospects.$inferInsert;
 export type Prospect = typeof prospects.$inferSelect;
+
+export type InsertUserInvitation = typeof userInvitations.$inferInsert;
+export type UserInvitation = typeof userInvitations.$inferSelect;
 
 export type InsertFile = typeof files.$inferInsert;
 export type File = typeof files.$inferSelect;

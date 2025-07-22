@@ -5,9 +5,11 @@ import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
-import { User, InsertUser } from "@shared/schema";
+import { User, InsertUser, userInvitations } from "@shared/schema";
 import connectPg from "connect-pg-simple";
 import { upload, processProfilePicture, deleteOldProfilePicture } from "./upload";
+import { eq } from "drizzle-orm";
+import { db } from "./db";
 
 declare global {
   namespace Express {
@@ -272,6 +274,16 @@ export function setupAuth(app: Express) {
     }
   });
 
+  app.get("/api/admin/sites", requireAdmin, async (req: any, res) => {
+    try {
+      const sites = await storage.getAllSites();
+      res.json(sites);
+    } catch (error) {
+      console.error("Error fetching sites:", error);
+      res.status(500).json({ message: "Failed to fetch sites" });
+    }
+  });
+
   app.patch("/api/admin/users/:userId/role", requireAdmin, async (req: any, res) => {
     try {
       const { userId } = req.params;
@@ -307,6 +319,279 @@ export function setupAuth(app: Express) {
     } catch (error) {
       console.error("Error updating user status:", error);
       res.status(500).json({ message: "Failed to update user status" });
+    }
+  });
+
+  // Email verification routes
+  app.get("/api/verify-email/:token", async (req: any, res) => {
+    try {
+      const { token } = req.params;
+      
+      const invitation = await storage.getUserInvitationByVerificationToken(token);
+      if (!invitation || invitation.status !== 'pending') {
+        return res.status(400).json({ message: "Invalid or expired verification link" });
+      }
+
+      // Check if token is expired (24 hours)
+      const tokenAge = Date.now() - new Date(invitation.createdAt).getTime();
+      if (tokenAge > 24 * 60 * 60 * 1000) {
+        return res.status(400).json({ message: "Verification link has expired" });
+      }
+
+      res.json({
+        success: true,
+        invitation: {
+          id: invitation.id,
+          prospectName: invitation.prospectName,
+          prospectEmail: invitation.prospectEmail,
+          siteName: invitation.siteName
+        }
+      });
+    } catch (error) {
+      console.error("Error verifying email token:", error);
+      res.status(500).json({ message: "Verification failed. Please try again." });
+    }
+  });
+
+  app.post("/api/verify-email/:token/set-password", async (req: any, res) => {
+    try {
+      const { token } = req.params;
+      const { password } = req.body;
+      
+      if (!password || password.length < 8) {
+        return res.status(400).json({ message: "Password must be at least 8 characters long" });
+      }
+
+      const invitation = await storage.getUserInvitationByVerificationToken(token);
+      if (!invitation || invitation.status !== 'pending') {
+        return res.status(400).json({ message: "Invalid or expired verification link" });
+      }
+
+      // Check if token is expired (24 hours)
+      const tokenAge = Date.now() - new Date(invitation.createdAt).getTime();
+      if (tokenAge > 24 * 60 * 60 * 1000) {
+        return res.status(400).json({ message: "Verification link has expired" });
+      }
+
+      // Find the user and set their password
+      if (!invitation.registeredUserId) {
+        return res.status(400).json({ message: "User account not found for this invitation" });
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const user = await storage.updateUserPassword(invitation.registeredUserId, hashedPassword);
+      if (!user) {
+        return res.status(400).json({ message: "Failed to set password" });
+      }
+
+      // Mark invitation as verified
+      await storage.updateUserInvitation(invitation.id, {
+        status: 'verified',
+        verifiedAt: new Date()
+      });
+
+      res.json({
+        success: true,
+        message: "Password set successfully! You can now log in."
+      });
+    } catch (error) {
+      console.error("Error setting password:", error);
+      res.status(500).json({ message: "Failed to set password. Please try again." });
+    }
+  });
+
+  // Access code validation and user registration routes
+  app.post("/api/validate-access-code", async (req: any, res) => {
+    try {
+      const { accessCode } = req.body;
+      
+      if (!accessCode) {
+        return res.status(400).json({ message: "Access code is required" });
+      }
+      
+      const site = await storage.validateAccessCode(accessCode);
+      if (!site) {
+        return res.status(404).json({ message: "Invalid or expired access code" });
+      }
+      
+      res.json({
+        success: true,
+        siteName: site.name,
+        welcomeMessage: site.welcomeMessage || `Welcome to ${site.name}! Please create your account to continue.`,
+      });
+    } catch (error) {
+      console.error("Error validating access code:", error);
+      res.status(500).json({ message: "Failed to validate access code" });
+    }
+  });
+
+  app.post("/api/register-with-access-code", async (req: any, res) => {
+    try {
+      const { accessCode, name, title, email } = req.body;
+      
+      if (!accessCode || !name || !email) {
+        return res.status(400).json({ message: "Access code, name, and email are required" });
+      }
+      
+      // Validate access code
+      const site = await storage.validateAccessCode(accessCode);
+      if (!site) {
+        return res.status(404).json({ message: "Invalid or expired access code" });
+      }
+      
+      // Check if user already registered with this access code
+      const existingInvitation = await storage.getUserInvitationByAccessCode(accessCode);
+      if (existingInvitation && existingInvitation.status === 'registered') {
+        return res.status(400).json({ message: "This access code has already been used" });
+      }
+      
+      // Check if user already exists
+      const existingUser = await storage.getUserByEmail(email.toLowerCase());
+      if (existingUser) {
+        // Link existing user to this site
+        if (existingInvitation) {
+          await storage.registerUserFromInvitation(existingInvitation.id, existingUser.id);
+        } else {
+          await storage.createUserInvitation({
+            email: email.toLowerCase(),
+            name,
+            title: title || null,
+            siteId: site.id,
+            accessCode,
+            status: 'registered',
+            registeredUserId: existingUser.id,
+            registeredAt: new Date(),
+          });
+        }
+        
+        // Log in the existing user
+        req.login(existingUser, (err: any) => {
+          if (err) {
+            return res.status(500).json({ message: "Login failed" });
+          }
+          res.json({
+            success: true,
+            user: {
+              id: existingUser.id,
+              email: existingUser.email,
+              firstName: existingUser.firstName,
+              lastName: existingUser.lastName,
+              role: existingUser.role,
+            },
+            siteId: site.id,
+            message: "Welcome back! You've been granted access to this site."
+          });
+        });
+        return;
+      }
+      
+      // Create new user invitation (they'll need to set a password later)
+      const verificationToken = require('crypto').randomBytes(32).toString('hex');
+      
+      const invitation = await storage.createUserInvitation({
+        email: email.toLowerCase(),
+        name,
+        title: title || null,
+        siteId: site.id,
+        accessCode,
+        status: 'pending',
+        verificationToken,
+      });
+      
+      // Create a temporary user account (no password yet)
+      const [firstName, ...lastNameParts] = name.trim().split(' ');
+      const lastName = lastNameParts.join(' ');
+      
+      const user = await storage.createUser({
+        email: email.toLowerCase(),
+        firstName: firstName || '',
+        lastName: lastName || '',
+        title: title || null,
+        password: '', // Will be set during verification
+        role: 'user',
+      });
+
+      // Register the user with the invitation
+      await storage.registerUserFromInvitation(invitation.id, user.id);
+
+      // Create and send verification email
+      const { sendVerificationEmail } = await import('./sendgrid');
+      const emailSent = await sendVerificationEmail(
+        user.email, 
+        `${user.firstName} ${user.lastName}`.trim() || user.email,
+        invitation.verificationToken
+      );
+
+      console.log(`User created for invitation: ${user.email}, Email sent: ${emailSent}`);
+      
+      res.json({
+        success: true,
+        message: "Registration successful! A verification email has been sent to your email address.",
+        requiresVerification: true,
+        siteId: site.id,
+      });
+    } catch (error) {
+      console.error("Error registering with access code:", error);
+      res.status(500).json({ message: "Failed to register" });
+    }
+  });
+
+  app.post("/api/verify-email", async (req: any, res) => {
+    try {
+      const { token, password } = req.body;
+      
+      if (!token || !password) {
+        return res.status(400).json({ message: "Token and password are required" });
+      }
+      
+      // Find invitation by token
+      const [invitation] = await db.select().from(userInvitations).where(eq(userInvitations.verificationToken, token));
+      if (!invitation) {
+        return res.status(404).json({ message: "Invalid verification token" });
+      }
+      
+      // Create user account
+      const hashedPassword = await hashPassword(password);
+      const userData = {
+        email: invitation.email,
+        password: hashedPassword,
+        firstName: invitation.name.split(' ')[0] || null,
+        lastName: invitation.name.split(' ').slice(1).join(' ') || null,
+        title: invitation.title,
+        role: 'user',
+        isActive: true,
+      };
+      
+      const user = await storage.createUser(userData);
+      
+      // Update invitation status
+      await storage.updateUserInvitation(invitation.id, {
+        status: 'verified',
+        registeredUserId: user.id,
+        verifiedAt: new Date(),
+      });
+      
+      // Log in the new user
+      req.login(user, (err: any) => {
+        if (err) {
+          return res.status(500).json({ message: "Login failed" });
+        }
+        res.json({
+          success: true,
+          user: {
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            role: user.role,
+          },
+          siteId: invitation.siteId,
+          message: "Account verified successfully! Welcome!"
+        });
+      });
+    } catch (error) {
+      console.error("Error verifying email:", error);
+      res.status(500).json({ message: "Failed to verify email" });
     }
   });
 
