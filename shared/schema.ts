@@ -25,7 +25,7 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
-// User storage table with basic authentication
+// User storage table with role-based authentication
 export const users = pgTable("users", {
   id: text("id").primaryKey().notNull().$defaultFn(() => nanoid()),
   email: varchar("email", { length: 255 }).unique().notNull(),
@@ -37,6 +37,7 @@ export const users = pgTable("users", {
   title: varchar("title", { length: 100 }),
   location: varchar("location", { length: 100 }),
   profileImageUrl: varchar("profile_image_url", { length: 500 }),
+  role: varchar("role", { length: 50 }).default("user").notNull(), // 'admin' or 'user'
   isActive: boolean("is_active").default(true),
   lastLogin: timestamp("last_login"),
   createdAt: timestamp("created_at").defaultNow(),

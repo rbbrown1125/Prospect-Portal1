@@ -71,6 +71,30 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
+  // Admin-only user management operations
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  async updateUserRole(userId: string, role: string): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set({ role, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+
+  async updateUserStatus(userId: string, isActive: boolean): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set({ isActive, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+
+
   // User operations
   // (IMPORTANT) these user operations are mandatory for Replit Auth.
   async getUser(id: string): Promise<User | undefined> {
@@ -129,7 +153,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Site operations
-  async getUserSites(userId: string): Promise<Site[]> {
+  async getUserSites(userId: string, userRole?: string): Promise<Site[]> {
+    // Admins can see all sites, regular users only their own
+    if (userRole === 'admin') {
+      return await db.select().from(sites).orderBy(desc(sites.createdAt));
+    }
     return await db.select().from(sites).where(eq(sites.userId, userId)).orderBy(desc(sites.createdAt));
   }
 
@@ -162,30 +190,33 @@ export class DatabaseStorage implements IStorage {
     return site;
   }
 
-  async getSite(siteId: string, userId: string): Promise<Site | undefined> {
+  async getSite(siteId: string, userId: string, userRole?: string): Promise<Site | undefined> {
     const [site] = await db.select().from(sites).where(eq(sites.id, siteId));
-    if (site && site.userId === userId) {
+    // Admins can access any site, regular users only their own
+    if (site && (userRole === 'admin' || site.userId === userId)) {
       return site;
     }
     return undefined;
   }
 
-  async updateSite(siteId: string, userId: string, updates: Partial<Site>): Promise<Site | undefined> {
+  async updateSite(siteId: string, userId: string, updates: Partial<Site>, userRole?: string): Promise<Site | undefined> {
     const [site] = await db
       .update(sites)
       .set({ ...updates, updatedAt: new Date() })
       .where(eq(sites.id, siteId))
       .returning();
     
-    if (site && site.userId === userId) {
+    // Admins can update any site, regular users only their own
+    if (site && (userRole === 'admin' || site.userId === userId)) {
       return site;
     }
     return undefined;
   }
 
-  async deleteSite(siteId: string, userId: string): Promise<boolean> {
+  async deleteSite(siteId: string, userId: string, userRole?: string): Promise<boolean> {
     const result = await db.delete(sites).where(eq(sites.id, siteId)).returning();
-    return result.length > 0 && result[0].userId === userId;
+    // Admins can delete any site, regular users only their own
+    return result.length > 0 && (userRole === 'admin' || result[0].userId === userId);
   }
 
   async getPublicSite(siteId: string): Promise<Site | undefined> {
@@ -250,7 +281,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Prospects operations
-  async getProspects(userId: string): Promise<Prospect[]> {
+  async getProspects(userId: string, userRole?: string): Promise<Prospect[]> {
+    // Admins can see all prospects, regular users only their own
+    if (userRole === 'admin') {
+      return await db.select().from(prospects).orderBy(desc(prospects.createdAt));
+    }
     return await db.select().from(prospects).where(eq(prospects.userId, userId)).orderBy(desc(prospects.createdAt));
   }
 

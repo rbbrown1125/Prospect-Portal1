@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, requireAuth } from "./auth";
+import { setupAuth, requireAuth, requireAdmin, requireOwnershipOrAdmin } from "./auth";
 import { insertSiteSchema, insertTemplateSchema, insertContentItemSchema, insertSiteViewSchema } from "@shared/schema";
 import { z } from "zod";
 
@@ -54,7 +54,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/sites', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const sites = await storage.getUserSites(userId);
+      const userRole = req.user.role;
+      const sites = await storage.getUserSites(userId, userRole);
       res.json(sites);
     } catch (error) {
       console.error("Error fetching sites:", error);
@@ -124,15 +125,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const siteId = req.params.id;
       const userId = req.user.id;
+      const userRole = req.user.role;
       
       // Validate UUID format
       if (!siteId || siteId === 'undefined' || !isValidUUID(siteId)) {
         return res.status(400).json({ message: "Invalid site ID format" });
       }
       
-      const site = await storage.getSite(siteId, userId);
+      const site = await storage.getSite(siteId, userId, userRole);
       if (!site) {
-        return res.status(404).json({ message: "Site not found" });
+        return res.status(404).json({ message: "Site not found or access denied" });
       }
       res.json(site);
     } catch (error) {
@@ -144,10 +146,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch('/api/sites/:id', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.id;
+      const userRole = req.user.role;
       const updates = req.body;
-      const site = await storage.updateSite(req.params.id, userId, updates);
+      const site = await storage.updateSite(req.params.id, userId, updates, userRole);
       if (!site) {
-        return res.status(404).json({ message: "Site not found" });
+        return res.status(404).json({ message: "Site not found or access denied" });
       }
       res.json(site);
     } catch (error) {
@@ -159,9 +162,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete('/api/sites/:id', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const success = await storage.deleteSite(req.params.id, userId);
+      const userRole = req.user.role;
+      const success = await storage.deleteSite(req.params.id, userId, userRole);
       if (!success) {
-        return res.status(404).json({ message: "Site not found" });
+        return res.status(404).json({ message: "Site not found or access denied" });
       }
       res.json({ message: "Site deleted successfully" });
     } catch (error) {
@@ -170,7 +174,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Templates routes
+  // Templates routes - available to all authenticated users
   app.get('/api/templates', requireAuth, async (req, res) => {
     try {
       const templates = await storage.getTemplates();
@@ -178,6 +182,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching templates:", error);
       res.status(500).json({ message: "Failed to fetch templates" });
+    }
+  });
+
+  // Admin-only template management
+  app.post('/api/templates', requireAdmin, async (req: any, res) => {
+    try {
+      const templateData = insertTemplateSchema.parse(req.body);
+      const template = await storage.createTemplate(templateData);
+      res.status(201).json(template);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid template data", errors: error.errors });
+      }
+      console.error("Error creating template:", error);
+      res.status(500).json({ message: "Failed to create template" });
     }
   });
 
@@ -226,7 +245,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/prospects', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const prospects = await storage.getProspects(userId);
+      const userRole = req.user.role;
+      const prospects = await storage.getProspects(userId, userRole);
       res.json(prospects);
     } catch (error) {
       console.error("Error fetching prospects:", error);

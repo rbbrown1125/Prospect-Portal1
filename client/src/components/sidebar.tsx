@@ -9,7 +9,8 @@ import {
   BarChart3, 
   Users, 
   Settings,
-  Share
+  Share,
+  Shield
 } from "lucide-react";
 
 const navigation = [
@@ -25,6 +26,12 @@ export default function Sidebar() {
   const [location, setLocation] = useLocation();
   const { user } = useAuth();
 
+  // Add admin navigation for admin users
+  const navigationItems = [...navigation];
+  if ((user as any)?.role === 'admin') {
+    navigationItems.push({ name: "Admin", href: "/admin", icon: Shield });
+  }
+
   return (
     <aside className="w-64 bg-white border-r border-slate-200 flex flex-col">
       <div className="p-6 border-b border-slate-200">
@@ -38,7 +45,7 @@ export default function Sidebar() {
       
       <nav className="flex-1 p-6">
         <ul className="space-y-2">
-          {navigation.map((item) => {
+          {navigationItems.map((item) => {
             const isActive = location === item.href;
             return (
               <li key={item.name}>
@@ -76,7 +83,9 @@ export default function Sidebar() {
             <p className="text-sm font-medium text-slate-900 truncate">
               {user ? `${(user as any).firstName || ''} ${(user as any).lastName || ''}`.trim() || (user as any).email : 'User'}
             </p>
-            <p className="text-xs text-slate-500 truncate">Sales Manager</p>
+            <p className="text-xs text-slate-500 truncate">
+              {(user as any)?.role === 'admin' ? 'Administrator' : 'Sales Manager'}
+            </p>
           </div>
           <button
             onClick={() => setLocation("/profile")}

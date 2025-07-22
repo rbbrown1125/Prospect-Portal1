@@ -21,6 +21,7 @@ declare global {
       title?: string | null;
       location?: string | null;
       profileImageUrl?: string | null;
+      role: string; // 'admin' or 'user'
       createdAt?: Date | null;
       updatedAt?: Date | null;
     }
@@ -44,6 +45,54 @@ async function comparePasswords(supplied: string, stored: string) {
 
 function validateGodlanEmail(email: string): boolean {
   return email.toLowerCase().endsWith("@godlan.com");
+}
+
+function determineUserRole(email: string): string {
+  // Admin emails - these users get admin privileges
+  const adminEmails = [
+    'admin@godlan.com',
+    'superuser@godlan.com',
+    'manager@godlan.com'
+  ];
+  
+  const normalizedEmail = email.toLowerCase();
+  
+  // Check if email is in admin list
+  if (adminEmails.includes(normalizedEmail)) {
+    return 'admin';
+  }
+  
+  // Default role for all other @godlan.com users
+  return 'user';
+}
+
+// Middleware to check if user is admin
+export function requireAdmin(req: any, res: any, next: any) {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "Authentication required" });
+  }
+  
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ message: "Admin privileges required" });
+  }
+  
+  next();
+}
+
+// Middleware to check if user can access resource (admin can access all, users only their own)
+export function requireOwnershipOrAdmin(req: any, res: any, next: any) {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "Authentication required" });
+  }
+  
+  // Admins can access everything
+  if (req.user.role === 'admin') {
+    return next();
+  }
+  
+  // Regular users can only access their own resources
+  // This will be handled in individual route handlers
+  next();
 }
 
 export function setupAuth(app: Express) {
@@ -128,11 +177,14 @@ export function setupAuth(app: Express) {
       }
 
       const hashedPassword = await hashPassword(password);
+      const userRole = determineUserRole(email);
+      
       const userData: InsertUser = {
         email: email.toLowerCase(),
         password: hashedPassword,
         firstName: firstName || null,
         lastName: lastName || null,
+        role: userRole,
         isActive: true,
       };
 
@@ -145,6 +197,7 @@ export function setupAuth(app: Express) {
           email: user.email,
           firstName: user.firstName,
           lastName: user.lastName,
+          role: user.role,
         });
       });
     } catch (error) {
@@ -172,6 +225,7 @@ export function setupAuth(app: Express) {
           email: user.email,
           firstName: user.firstName,
           lastName: user.lastName,
+          role: user.role,
         });
       });
     })(req, res, next);
@@ -201,9 +255,59 @@ export function setupAuth(app: Express) {
       title: req.user.title,
       location: req.user.location,
       profileImageUrl: req.user.profileImageUrl,
+      role: req.user.role,
       createdAt: req.user.createdAt,
       updatedAt: req.user.updatedAt,
     });
+  });
+
+  // Admin-only user management routes
+  app.get("/api/admin/users", requireAdmin, async (req: any, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  app.patch("/api/admin/users/:userId/role", requireAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const { role } = req.body;
+      
+      if (!['admin', 'user'].includes(role)) {
+        return res.status(400).json({ message: "Invalid role. Must be 'admin' or 'user'" });
+      }
+      
+      const updatedUser = await storage.updateUserRole(userId, role);
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating user role:", error);
+      res.status(500).json({ message: "Failed to update user role" });
+    }
+  });
+
+  app.patch("/api/admin/users/:userId/status", requireAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const { isActive } = req.body;
+      
+      const updatedUser = await storage.updateUserStatus(userId, isActive);
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating user status:", error);
+      res.status(500).json({ message: "Failed to update user status" });
+    }
   });
 
   // Update user profile endpoint
