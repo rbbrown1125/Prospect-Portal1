@@ -881,20 +881,34 @@ export default function SiteEdit() {
                               <Button
                                 type="button"
                                 onClick={async () => {
+                                  console.log('Debug - site:', site);
+                                  console.log('Debug - params:', params);
+                                  console.log('Debug - params?.id:', params?.id);
+                                  
+                                  if (!site?.id || !params?.id) {
+                                    toast({
+                                      title: "Error",
+                                      description: "Site data not loaded. Please refresh the page.",
+                                      variant: "destructive",
+                                    });
+                                    return;
+                                  }
+                                  
                                   try {
-                                    const response = await apiRequest('POST', `/api/sites/${site?.id}/generate-access-code`, {
-                                      welcomeMessage: `Welcome to ${site?.name}! Please create your account to access your personalized content.`
+                                    const response = await apiRequest('POST', `/api/sites/${params.id}/generate-access-code`, {
+                                      welcomeMessage: `Welcome to ${site.name}! Please create your account to access your personalized content.`
                                     });
                                     const data = await response.json();
                                     
                                     // Refetch site to get updated access code
-                                    queryClient.invalidateQueries({ queryKey: ['/api/sites', params?.id] });
+                                    queryClient.invalidateQueries({ queryKey: ['/api/sites', params.id] });
                                     
                                     toast({
                                       title: "Access code generated!",
                                       description: "Users can now register with the access code",
                                     });
                                   } catch (error) {
+                                    console.error('Access code generation error:', error);
                                     toast({
                                       title: "Error",
                                       description: "Failed to generate access code",
@@ -903,8 +917,9 @@ export default function SiteEdit() {
                                   }
                                 }}
                                 className="w-full"
+                                disabled={!site || isLoading}
                               >
-                                Generate Access Code
+                                {isLoading ? "Loading..." : "Generate Access Code"}
                               </Button>
                               <p className="text-xs text-muted-foreground mt-1">
                                 Generate a unique code for user registration

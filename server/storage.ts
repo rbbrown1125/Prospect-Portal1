@@ -437,6 +437,9 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async getAllSites(): Promise<Site[]> {
+    return await db.select().from(sites).orderBy(desc(sites.createdAt));
+  }
 }
 
 export const storage = new DatabaseStorage();
