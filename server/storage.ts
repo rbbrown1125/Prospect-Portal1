@@ -242,8 +242,22 @@ export class DatabaseStorage implements IStorage {
   }
 
   async authenticateProspectSite(siteId: string, password: string): Promise<Site | undefined> {
-    // This method is deprecated - we now use access codes instead of passwords
-    // Kept for backward compatibility, but returns undefined as we no longer use passwords
+    const [site] = await db.select().from(sites).where(eq(sites.id, siteId));
+    
+    if (!site) {
+      return undefined;
+    }
+    
+    // If site has no password, authenticate immediately
+    if (!site.accessPassword) {
+      return site;
+    }
+    
+    // Check password
+    if (site.accessPassword === password) {
+      return site;
+    }
+    
     return undefined;
   }
 

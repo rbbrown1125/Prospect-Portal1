@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { useLocation } from "wouter";
 import Sidebar from "@/components/sidebar";
@@ -7,13 +7,48 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Eye, Edit, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Sites() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [, setLocation] = useLocation();
+  const [siteToDelete, setSiteToDelete] = useState<any>(null);
+  const { toast } = useToast();
 
   const { data: sites, isLoading } = useQuery({
     queryKey: ['/api/sites'],
+  });
+
+  const deleteSiteMutation = useMutation({
+    mutationFn: async (siteId: string) => {
+      return apiRequest(`/api/sites/${siteId}`, 'DELETE');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/sites'] });
+      toast({
+        title: "Site deleted",
+        description: "The site has been successfully deleted.",
+      });
+      setSiteToDelete(null);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to delete the site. Please try again.",
+        variant: "destructive",
+      });
+    },
   });
 
   return (
@@ -55,7 +90,7 @@ export default function Sites() {
                 </Card>
               ))}
             </div>
-          ) : sites && sites.length > 0 ? (
+          ) : sites && Array.isArray(sites) && sites.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
               {sites.map((site: any) => (
                 <Card key={site.id} className="hover:shadow-lg transition-shadow">
@@ -106,7 +141,12 @@ export default function Sites() {
                           <span className="hidden sm:inline">Edit</span>
                           <span className="sm:hidden">✏️</span>
                         </Button>
-                        <Button size="sm" variant="outline" className="text-destructive">
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="text-destructive"
+                          onClick={() => setSiteToDelete(site)}
+                        >
                           <Trash2 className="h-3 w-3 lg:h-4 lg:w-4" />
                         </Button>
                       </div>
@@ -140,6 +180,27 @@ export default function Sites() {
         isOpen={isCreateModalOpen} 
         onClose={() => setIsCreateModalOpen(false)} 
       />
+
+      <AlertDialog open={!!siteToDelete} onOpenChange={() => setSiteToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Site</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{siteToDelete?.name}"? This action cannot be undone.
+              All site data including analytics will be permanently removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteSiteMutation.mutate(siteToDelete.id)}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
