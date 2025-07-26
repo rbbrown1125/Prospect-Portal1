@@ -113,7 +113,7 @@ export async function sendVerificationEmail(email: string, name: string, token: 
 
   return sendEmail({
     to: email,
-    from: 'noreply@godlan.com', // Make sure this is verified in your SendGrid account
+    from: 'sam@sb3partners.com', // Verified sender in SendGrid account
     subject: 'Verify your email - Infor CloudSuite Industrial Portal',
     text: textContent,
     html: htmlContent,
