@@ -489,7 +489,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ 
         id: site.id, 
         name: site.name, 
-        requiresPassword: !!site.accessPassword 
+        requiresAccessCode: !!site.accessCode 
       });
     } catch (error) {
       console.error("Error fetching public site:", error);

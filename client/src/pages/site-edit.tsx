@@ -882,7 +882,7 @@ export default function SiteEdit() {
                                 type="button"
                                 onClick={async () => {
                                   try {
-                                    const response = await apiRequest(`/api/sites/${site?.id}/generate-access-code`, 'POST', {
+                                    const response = await apiRequest('POST', `/api/sites/${site?.id}/generate-access-code`, {
                                       welcomeMessage: `Welcome to ${site?.name}! Please create your account to access your personalized content.`
                                     });
                                     const data = await response.json();

@@ -248,13 +248,13 @@ export class DatabaseStorage implements IStorage {
       return undefined;
     }
     
-    // If site has no password, authenticate immediately
-    if (!site.accessPassword) {
+    // If site has no access code, authenticate immediately
+    if (!site.accessCode) {
       return site;
     }
     
-    // Check password
-    if (site.accessPassword === password) {
+    // Check access code
+    if (site.accessCode === password) {
       return site;
     }
     
@@ -437,14 +437,6 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  // Admin operations
-  async getAllUsers(): Promise<User[]> {
-    return await db.select().from(users).orderBy(desc(users.createdAt));
-  }
-
-  async getAllSites(): Promise<Site[]> {
-    return await db.select().from(sites).orderBy(desc(sites.createdAt));
-  }
 }
 
 export const storage = new DatabaseStorage();
