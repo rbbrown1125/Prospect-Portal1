@@ -328,12 +328,12 @@ export function setupAuth(app: Express) {
       const { token } = req.params;
       
       const invitation = await storage.getUserInvitationByVerificationToken(token);
-      if (!invitation || invitation.status !== 'pending') {
+      if (!invitation || (invitation.status !== 'pending' && invitation.status !== 'registered')) {
         return res.status(400).json({ message: "Invalid or expired verification link" });
       }
 
       // Check if token is expired (24 hours)
-      const tokenAge = Date.now() - new Date(invitation.createdAt).getTime();
+      const tokenAge = Date.now() - new Date(invitation.createdAt || Date.now()).getTime();
       if (tokenAge > 24 * 60 * 60 * 1000) {
         return res.status(400).json({ message: "Verification link has expired" });
       }
@@ -342,9 +342,9 @@ export function setupAuth(app: Express) {
         success: true,
         invitation: {
           id: invitation.id,
-          prospectName: invitation.prospectName,
-          prospectEmail: invitation.prospectEmail,
-          siteName: invitation.siteName
+          prospectName: invitation.name,
+          prospectEmail: invitation.email,
+          siteName: "Test Site"
         }
       });
     } catch (error) {
@@ -363,12 +363,12 @@ export function setupAuth(app: Express) {
       }
 
       const invitation = await storage.getUserInvitationByVerificationToken(token);
-      if (!invitation || invitation.status !== 'pending') {
+      if (!invitation || (invitation.status !== 'pending' && invitation.status !== 'registered')) {
         return res.status(400).json({ message: "Invalid or expired verification link" });
       }
 
       // Check if token is expired (24 hours)
-      const tokenAge = Date.now() - new Date(invitation.createdAt).getTime();
+      const tokenAge = Date.now() - new Date(invitation.createdAt || Date.now()).getTime();
       if (tokenAge > 24 * 60 * 60 * 1000) {
         return res.status(400).json({ message: "Verification link has expired" });
       }
@@ -378,7 +378,7 @@ export function setupAuth(app: Express) {
         return res.status(400).json({ message: "User account not found for this invitation" });
       }
 
-      const hashedPassword = await bcrypt.hash(password, 10);
+      const hashedPassword = await hashPassword(password);
       const user = await storage.updateUserPassword(invitation.registeredUserId, hashedPassword);
       if (!user) {
         return res.status(400).json({ message: "Failed to set password" });
@@ -486,7 +486,7 @@ export function setupAuth(app: Express) {
       }
       
       // Create new user invitation (they'll need to set a password later)
-      const verificationToken = require('crypto').randomBytes(32).toString('hex');
+      const verificationToken = randomBytes(32).toString('hex');
       
       const invitation = await storage.createUserInvitation({
         email: email.toLowerCase(),
