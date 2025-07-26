@@ -88,10 +88,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/sites', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const siteData = insertSiteSchema.parse({ ...req.body, userId });
+      const { generateAccessCode, ...siteDataRest } = req.body;
+      const siteData = insertSiteSchema.parse({ ...siteDataRest, userId });
       
       // Create the site
       const site = await storage.createSite(siteData);
+      
+      // Generate access code if requested
+      if (generateAccessCode) {
+        const accessCode = await storage.generateAccessCode(site.id);
+        site.accessCode = accessCode;
+      }
       
       // Create a prospect record for this site
       if (site.prospectName && site.prospectEmail) {
@@ -200,10 +207,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Admin route to generate access code for a site
-  app.post('/api/sites/:id/generate-access-code', requireAdmin, async (req: any, res) => {
+  // Route to generate access code for a site
+  app.post('/api/sites/:id/generate-access-code', requireAuth, async (req: any, res) => {
     try {
       const siteId = req.params.id;
+      const userId = req.user.id;
+      const userRole = req.user.role;
       const { welcomeMessage } = req.body;
       
       // Validate UUID format
@@ -211,10 +220,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid site ID format" });
       }
       
-      // Check if site exists
-      const site = await storage.getPublicSite(siteId);
+      // Check if site exists and user has access
+      const site = await storage.getSite(siteId, userId, userRole);
       if (!site) {
-        return res.status(404).json({ message: "Site not found" });
+        return res.status(404).json({ message: "Site not found or access denied" });
       }
       
       // Generate access code
@@ -222,7 +231,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Update welcome message if provided
       if (welcomeMessage) {
-        await storage.updateSite(siteId, req.user.id, { welcomeMessage }, req.user.role);
+        await storage.updateSite(siteId, userId, { welcomeMessage }, userRole);
       }
       
       res.json({

@@ -36,7 +36,7 @@ export default function CreateSiteModal({ isOpen, onClose, preSelectedTemplateId
   const [prospectEmail, setProspectEmail] = useState("");
   const [prospectCompany, setProspectCompany] = useState("");
   const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(preSelectedTemplateId || null);
-  const [accessPassword, setAccessPassword] = useState("");
+  const [generateAccessCode, setGenerateAccessCode] = useState(false);
   const [createdSite, setCreatedSite] = useState<any>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [templateSections, setTemplateSections] = useState<any[]>([]);
@@ -143,7 +143,7 @@ export default function CreateSiteModal({ isOpen, onClose, preSelectedTemplateId
       prospectEmail,
       prospectCompany,
       templateId: selectedTemplateId,
-      accessPassword,
+      generateAccessCode,
       customContent: templateSections.length > 0 ? { sections: templateSections } : null,
       isActive: true,
     });
@@ -157,7 +157,7 @@ export default function CreateSiteModal({ isOpen, onClose, preSelectedTemplateId
     setProspectEmail("");
     setProspectCompany("");
     setSelectedTemplateId(preSelectedTemplateId || null);
-    setAccessPassword("");
+    setGenerateAccessCode(false);
     setCreatedSite(null);
     setShowSuccess(false);
     setTemplateSections([]);
@@ -242,23 +242,26 @@ export default function CreateSiteModal({ isOpen, onClose, preSelectedTemplateId
                 </div>
               </div>
 
-              {createdSite.accessPassword && (
+              {createdSite.accessCode && (
                 <div>
-                  <Label className="text-sm font-medium text-slate-700">Access Password</Label>
+                  <Label className="text-sm font-medium text-slate-700">Access Code</Label>
                   <div className="flex items-center space-x-2 mt-1">
                     <Input
-                      value={createdSite.accessPassword}
+                      value={createdSite.accessCode}
                       readOnly
                       className="flex-1 bg-slate-50"
                     />
                     <Button
                       size="sm"
-                      onClick={() => copyToClipboard(createdSite.accessPassword)}
+                      onClick={() => copyToClipboard(createdSite.accessCode)}
                       className="shrink-0"
                     >
                       <Copy className="h-4 w-4" />
                     </Button>
                   </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Share this code with users to allow them to register and access the site
+                  </p>
                 </div>
               )}
             </div>
@@ -408,14 +411,21 @@ export default function CreateSiteModal({ isOpen, onClose, preSelectedTemplateId
           </div>
 
           <div>
-            <Label htmlFor="accessPassword">Access Password (Optional)</Label>
-            <Input
-              id="accessPassword"
-              type="password"
-              value={accessPassword}
-              onChange={(e) => setAccessPassword(e.target.value)}
-              placeholder="Set a password for site access"
-            />
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="generateAccessCode"
+                checked={generateAccessCode}
+                onChange={(e) => setGenerateAccessCode(e.target.checked)}
+                className="h-4 w-4"
+              />
+              <Label htmlFor="generateAccessCode" className="font-normal cursor-pointer">
+                Generate access code for user registration (sends email invitations)
+              </Label>
+            </div>
+            <p className="text-sm text-muted-foreground mt-1">
+              Enable this to allow users to register and access this site via unique access codes
+            </p>
           </div>
           
           <div>

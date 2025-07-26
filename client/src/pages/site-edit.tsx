@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
-import { ArrowLeft, Save, Eye, Edit3, Type, Image, FileText, Plus, Trash2, GripVertical, Upload, Link2, FolderOpen, Grid3X3, List, Columns, X } from 'lucide-react';
+import { ArrowLeft, Save, Eye, Edit3, Type, Image, FileText, Plus, Trash2, GripVertical, Upload, Link2, FolderOpen, Grid3X3, List, Columns, X, Copy } from 'lucide-react';
 import { isUnauthorizedError } from '@/lib/authUtils';
 import Sidebar from '@/components/sidebar';
 import { Site, Template } from '@shared/schema';
@@ -27,7 +27,6 @@ export default function SiteEdit() {
   const [prospectName, setProspectName] = useState('');
   const [prospectCompany, setProspectCompany] = useState('');
   const [prospectEmail, setProspectEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [customContent, setCustomContent] = useState('');
   // Better type definitions for improved type safety
   interface SectionData {
@@ -88,7 +87,6 @@ export default function SiteEdit() {
       setProspectName(site.prospectName || '');
       setProspectCompany(site.prospectCompany || '');
       setProspectEmail(site.prospectEmail || '');
-      setPassword(site.accessPassword || '');
       setCustomContent(typeof site.customContent === 'string' ? site.customContent : JSON.stringify(site.customContent || {}));
     }
   }, [site]);
@@ -181,7 +179,6 @@ export default function SiteEdit() {
       prospectName,
       prospectCompany,
       prospectEmail,
-      password,
       customContent,
       templateSections,
     });
@@ -850,47 +847,71 @@ export default function SiteEdit() {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="password">Access Password</Label>
-                        <div className="flex gap-2">
-                          <Input
-                            id="password"
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="Enter access password for prospects"
-                            className="flex-1"
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              const generated = Math.random().toString(36).slice(2, 10);
-                              setPassword(generated);
-                            }}
-                          >
-                            Generate
-                          </Button>
-                          {password && (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                navigator.clipboard.writeText(password);
-                                toast({
-                                  title: "Password copied",
-                                  description: "Password copied to clipboard",
-                                });
-                              }}
-                            >
-                              Copy
-                            </Button>
+                        <Label>Access Code</Label>
+                        <div className="space-y-2">
+                          {site?.accessCode ? (
+                            <div>
+                              <div className="flex gap-2">
+                                <Input
+                                  value={site.accessCode}
+                                  readOnly
+                                  className="flex-1 bg-slate-50"
+                                />
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(site.accessCode || '');
+                                    toast({
+                                      title: "Copied!",
+                                      description: "Access code copied to clipboard",
+                                    });
+                                  }}
+                                >
+                                  <Copy className="h-4 w-4" />
+                                </Button>
+                              </div>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Users can register with this code to access the site
+                              </p>
+                            </div>
+                          ) : (
+                            <div>
+                              <Button
+                                type="button"
+                                onClick={async () => {
+                                  try {
+                                    const response = await apiRequest(`/api/sites/${site?.id}/generate-access-code`, 'POST', {
+                                      welcomeMessage: `Welcome to ${site?.name}! Please create your account to access your personalized content.`
+                                    });
+                                    const data = await response.json();
+                                    
+                                    // Refetch site to get updated access code
+                                    queryClient.invalidateQueries({ queryKey: ['/api/sites', params?.id] });
+                                    
+                                    toast({
+                                      title: "Access code generated!",
+                                      description: "Users can now register with the access code",
+                                    });
+                                  } catch (error) {
+                                    toast({
+                                      title: "Error",
+                                      description: "Failed to generate access code",
+                                      variant: "destructive",
+                                    });
+                                  }
+                                }}
+                                className="w-full"
+                              >
+                                Generate Access Code
+                              </Button>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Generate a unique code for user registration
+                              </p>
+                            </div>
                           )}
                         </div>
-                        <p className="text-xs text-slate-500 mt-1">
-                          This password will be required for prospects to view the site. Share this with your prospect securely.
-                        </p>
                       </div>
                     </div>
                   </CardContent>
