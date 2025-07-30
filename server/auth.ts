@@ -519,7 +519,7 @@ export function setupAuth(app: Express) {
       const emailSent = await sendVerificationEmail(
         user.email, 
         `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email,
-        invitation.verificationToken
+        invitation.verificationToken || ''
       );
 
       console.log(`User created for invitation: ${user.email}, Email sent: ${emailSent}`);

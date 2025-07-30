@@ -19,9 +19,12 @@ import Sidebar from '@/components/sidebar';
 import { Site, Template } from '@shared/schema';
 
 export default function SiteEdit() {
-  const [, params] = useRoute('/sites/:id/edit');
+  const [match, params] = useRoute('/sites/:id/edit');
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  
+  // Extract site ID and validate it exists
+  const siteId = params?.id;
   
   const [siteName, setSiteName] = useState('');
   const [prospectName, setProspectName] = useState('');
@@ -65,8 +68,8 @@ export default function SiteEdit() {
   const [editingSectionIndex, setEditingSectionIndex] = useState<number>(-1);
 
   const { data: site, isLoading } = useQuery<Site>({
-    queryKey: ['/api/sites', params?.id],
-    enabled: !!params?.id,
+    queryKey: ['/api/sites', siteId],
+    enabled: !!siteId && match,
   });
 
   const { data: templates } = useQuery<Template[]>({
@@ -881,11 +884,7 @@ export default function SiteEdit() {
                               <Button
                                 type="button"
                                 onClick={async () => {
-                                  console.log('Debug - site:', site);
-                                  console.log('Debug - params:', params);
-                                  console.log('Debug - params?.id:', params?.id);
-                                  
-                                  if (!site?.id || !params?.id) {
+                                  if (!site?.id || !siteId) {
                                     toast({
                                       title: "Error",
                                       description: "Site data not loaded. Please refresh the page.",
@@ -895,7 +894,7 @@ export default function SiteEdit() {
                                   }
                                   
                                   try {
-                                    const response = await apiRequest('POST', `/api/sites/${params.id}/generate-access-code`, {
+                                    const response = await apiRequest('POST', `/api/sites/${siteId}/generate-access-code`, {
                                       welcomeMessage: `Welcome to ${site.name}! Please create your account to access your personalized content.`
                                     });
                                     const data = await response.json();

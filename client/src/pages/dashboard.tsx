@@ -6,7 +6,7 @@ import RecentSites from "@/components/recent-sites";
 import QuickActions from "@/components/quick-actions";
 import TemplatesSection from "@/components/templates-section";
 import CreateSiteModal from "@/components/create-site-modal";
-import { DashboardSkeleton } from "@/components/loading-skeleton";
+import { DashboardStatsSkeleton, SiteCardSkeleton } from "@/components/loading-skeleton";
 import { useDashboardData, type DashboardData } from "@/hooks/use-dashboard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -65,7 +65,21 @@ export default function Dashboard() {
           <Sidebar />
         </div>
         <main className="flex-1 p-6">
-          <DashboardSkeleton />
+          <div className="space-y-6">
+            <div>
+              <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
+              <p className="text-slate-600 mt-1">Loading your workspace...</p>
+            </div>
+            <DashboardStatsSkeleton />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {[1, 2].map((i) => (
+                <div key={i} className="space-y-4">
+                  <SiteCardSkeleton />
+                  <SiteCardSkeleton />
+                </div>
+              ))}
+            </div>
+          </div>
         </main>
       </div>
     );
