@@ -56,6 +56,7 @@ router.get('/api/dashboard/data', requireAuth, async (req, res) => {
         activeProspects: uniqueProspects,
         engagementRate: userSites.length > 0 ? Math.round((totalViews / userSites.length) * 10) : 0,
         recentViews: siteViewsData.filter(v => {
+          if (!v.viewedAt) return false;
           const dayAgo = new Date();
           dayAgo.setDate(dayAgo.getDate() - 1);
           return new Date(v.viewedAt) > dayAgo;
