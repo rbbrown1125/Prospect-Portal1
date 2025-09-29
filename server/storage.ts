@@ -154,18 +154,43 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, userId));
   }
 
-  // Dashboard operations
+  // Dashboard operations - Optimized with parallel queries
   async getDashboardStats(userId: string): Promise<any> {
-    const userSites = await db.select().from(sites).where(eq(sites.userId, userId));
-    const activeSites = userSites.filter(site => site.isActive).length;
-    const totalViews = userSites.reduce((sum, site) => sum + (site.views || 0), 0);
-    const activeProspects = new Set(userSites.map(site => site.prospectEmail)).size;
+    // Execute all queries in parallel for better performance
+    const [userSites, siteViewsData, userProspects] = await Promise.all([
+      db.select().from(sites).where(eq(sites.userId, userId)),
+      db.select({
+        siteId: siteViews.siteId,
+        viewedAt: siteViews.viewedAt,
+      })
+        .from(siteViews)
+        .innerJoin(sites, eq(siteViews.siteId, sites.id))
+        .where(eq(sites.userId, userId))
+        .orderBy(desc(siteViews.viewedAt))
+        .limit(100),
+      db.select().from(prospects).where(eq(prospects.userId, userId))
+    ]);
+
+    const activeSites = userSites.filter(site => site.isActive !== false).length;
+    const totalViews = siteViewsData.length;
+    const uniqueProspects = new Set(userSites.filter(s => s.prospectEmail).map(s => s.prospectEmail)).size;
+    
+    // Calculate recent activity
+    const recentActivity = siteViewsData.slice(0, 5).map(view => {
+      const site = userSites.find(s => s.id === view.siteId);
+      return {
+        siteName: site?.name || 'Unknown Site',
+        viewedAt: view.viewedAt,
+      };
+    });
     
     return {
       activeSites,
       totalViews,
-      activeProspects,
+      totalProspects: userProspects.length,
+      activeProspects: uniqueProspects,
       engagementRate: userSites.length > 0 ? Math.round((totalViews / userSites.length) * 10) : 0,
+      recentActivity,
     };
   }
 

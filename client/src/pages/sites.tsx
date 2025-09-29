@@ -1,12 +1,15 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useLocation } from "wouter";
 import Sidebar from "@/components/sidebar";
 import CreateSiteModal from "@/components/create-site-modal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Eye, Edit, Trash2 } from "lucide-react";
+import { Plus, Eye, Edit, Trash2, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { SiteCardSkeleton } from "@/components/loading-skeleton";
+import { useDebounce } from "@/hooks/use-debounce";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,11 +27,28 @@ export default function Sites() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [, setLocation] = useLocation();
   const [siteToDelete, setSiteToDelete] = useState<any>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const { toast } = useToast();
+
+  // Debounce search query for better performance
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
   const { data: sites, isLoading } = useQuery({
     queryKey: ['/api/sites'],
   });
+
+  // Filter sites based on search query with memoization
+  const filteredSites = useMemo(() => {
+    if (!sites || !debouncedSearchQuery) return sites || [];
+    
+    const query = debouncedSearchQuery.toLowerCase();
+    return sites.filter((site: any) => 
+      site.name?.toLowerCase().includes(query) ||
+      site.prospectName?.toLowerCase().includes(query) ||
+      site.prospectCompany?.toLowerCase().includes(query) ||
+      site.prospectEmail?.toLowerCase().includes(query)
+    );
+  }, [sites, debouncedSearchQuery]);
 
   const deleteSiteMutation = useMutation({
     mutationFn: async (siteId: string) => {
@@ -57,42 +77,55 @@ export default function Sites() {
       
       <main className="flex-1 flex flex-col overflow-hidden">
         <header className="bg-white border-b border-slate-200 px-4 lg:px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl lg:text-2xl font-bold text-slate-900">My Sites</h1>
-              <p className="text-slate-600 mt-1 text-sm lg:text-base">Manage all your prospect sites</p>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-xl lg:text-2xl font-bold text-slate-900">My Sites</h1>
+                <p className="text-slate-600 mt-1 text-sm lg:text-base">Manage all your prospect sites</p>
+              </div>
+              <Button 
+                onClick={() => setIsCreateModalOpen(true)}
+                className="bg-primary hover:bg-primary/90 text-white flex items-center space-x-2"
+                size="sm"
+              >
+                <Plus className="h-4 w-4" />
+                <span className="hidden sm:inline">Create New Site</span>
+                <span className="sm:hidden">Create</span>
+              </Button>
             </div>
-            <Button 
-              onClick={() => setIsCreateModalOpen(true)}
-              className="bg-primary hover:bg-primary/90 text-white flex items-center space-x-2"
-              size="sm"
-            >
-              <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">Create New Site</span>
-              <span className="sm:hidden">Create</span>
-            </Button>
+            
+            {/* Search bar for better UX */}
+            <div className="relative max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
+              <Input
+                type="text"
+                placeholder="Search sites by name, prospect, or email..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-4"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  ×
+                </button>
+              )}
+            </div>
           </div>
         </header>
 
         <div className="flex-1 overflow-auto p-4 lg:p-6">
           {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-              {[...Array(6)].map((_, i) => (
-                <Card key={i} className="animate-pulse">
-                  <CardHeader>
-                    <div className="h-4 bg-slate-200 rounded w-3/4"></div>
-                    <div className="h-3 bg-slate-200 rounded w-1/2 mt-2"></div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-3 bg-slate-200 rounded w-full mb-2"></div>
-                    <div className="h-3 bg-slate-200 rounded w-2/3"></div>
-                  </CardContent>
-                </Card>
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <SiteCardSkeleton key={i} />
               ))}
             </div>
-          ) : sites && Array.isArray(sites) && sites.length > 0 ? (
+          ) : filteredSites && Array.isArray(filteredSites) && filteredSites.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-              {sites.map((site: any) => (
+              {filteredSites.map((site: any) => (
                 <Card key={site.id} className="hover:shadow-lg transition-shadow">
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">

@@ -518,8 +518,8 @@ export function setupAuth(app: Express) {
       const { sendVerificationEmail } = await import('./sendgrid');
       const emailSent = await sendVerificationEmail(
         user.email, 
-        `${user.firstName} ${user.lastName}`.trim() || user.email,
-        invitation.verificationToken
+        `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email,
+        invitation.verificationToken || ''
       );
 
       console.log(`User created for invitation: ${user.email}, Email sent: ${emailSent}`);
