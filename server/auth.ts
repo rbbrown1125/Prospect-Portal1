@@ -642,27 +642,30 @@ export function setupAuth(app: Express) {
       const currentUser = await storage.getUser(userId);
       
       // Process and save the new profile picture
-      const profileImageUrl = await processProfilePicture(
+      const processedPicture = await processProfilePicture(
         req.file.buffer,
         userId,
         req.file.originalname
       );
-      
+
       // Delete old profile picture if it exists
-      if (currentUser?.profileImageUrl) {
-        await deleteOldProfilePicture(currentUser.profileImageUrl);
+      if (currentUser?.profileImageAssetId) {
+        await deleteOldProfilePicture(currentUser.profileImageAssetId);
       }
-      
+
       // Update user with new profile picture URL
-      const updatedUser = await storage.updateUser(userId, { profileImageUrl });
+      const updatedUser = await storage.updateUser(userId, {
+        profileImageUrl: processedPicture.url,
+        profileImageAssetId: processedPicture.recordId,
+      });
       
       if (!updatedUser) {
         return res.status(404).json({ message: "User not found" });
       }
       
       res.json({ 
-        profileImageUrl,
-        message: "Profile picture updated successfully" 
+        profileImageUrl: processedPicture.url,
+        message: "Profile picture updated successfully"
       });
     } catch (error) {
       console.error("Error uploading profile picture:", error);

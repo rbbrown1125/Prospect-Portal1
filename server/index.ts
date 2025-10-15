@@ -1,5 +1,4 @@
 import express, { type Request, Response, NextFunction } from "express";
-import path from "path";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { seedTemplates } from "./seed";
@@ -45,9 +44,6 @@ app.use((req, res, next) => {
       process.env.NODE_ENV = 'development';
       log("NODE_ENV not set, defaulting to development");
     }
-    
-    // Serve static upload files
-    app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
     
     const server = await registerRoutes(app);
     
