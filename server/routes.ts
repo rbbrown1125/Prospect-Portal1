@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { pool } from "./db";
 import { setupAuth, requireAuth, requireAdmin, requireOwnershipOrAdmin } from "./auth";
 import { insertSiteSchema, insertTemplateSchema, insertContentItemSchema, insertSiteViewSchema } from "@shared/schema";
 import { z } from "zod";
@@ -11,6 +12,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     return uuidRegex.test(uuid);
   };
+
+  app.get('/api/health', async (_req, res) => {
+    try {
+      await pool.query('select 1');
+      res.json({ status: 'ok' });
+    } catch (error) {
+      res.status(503).json({
+        status: 'error',
+        message: 'Database unreachable',
+        detail: (error as Error).message,
+      });
+    }
+  });
 
   // Auth middleware
   setupAuth(app);

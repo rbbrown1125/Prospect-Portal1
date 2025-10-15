@@ -37,6 +37,7 @@ export const users = pgTable("users", {
   title: varchar("title", { length: 100 }),
   location: varchar("location", { length: 100 }),
   profileImageUrl: varchar("profile_image_url", { length: 500 }),
+  profileImageAssetId: varchar("profile_image_asset_id", { length: 255 }),
   role: varchar("role", { length: 50 }).default("user").notNull(), // 'admin' or 'user'
   isActive: boolean("is_active").default(true),
   lastLogin: timestamp("last_login"),
