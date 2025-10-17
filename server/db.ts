@@ -1,22 +1,20 @@
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
-import ws from "ws";
+import pg from "pg";
+import { drizzle } from "drizzle-orm/node-postgres";
 import * as schema from "@shared/schema";
 
-// Configure WebSocket for serverless environments
-neonConfig.webSocketConstructor = ws;
+const DEFAULT_DATABASE_URL = "postgresql://postgres@127.0.0.1:5432/prospect_portal";
 
 if (!process.env.DATABASE_URL) {
-  throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?",
+  process.env.DATABASE_URL = DEFAULT_DATABASE_URL;
+  console.warn(
+    "DATABASE_URL not provided. Falling back to bundled Postgres instance at postgresql://postgres@127.0.0.1:5432/prospect_portal",
   );
 }
 
-// Create pool with retry configuration
-export const pool = new Pool({ 
+export const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: true,
-  connectionTimeoutMillis: 30000,
+  max: 10,
+  idleTimeoutMillis: 30000,
 });
 
 export const db = drizzle({ client: pool, schema });
