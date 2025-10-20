@@ -16,6 +16,30 @@ The Docker image now bundles everything the application needs to run in isolatio
 docker build -t prospect-portal .
 ```
 
+> **Troubleshooting:** If you see `docker: 'docker buildx build' requires 1 argument`, it means the build command was run
+> without specifying the build context. Make sure to include the trailing `.` (or provide an explicit path/URL) so Docker
+> knows which files to send to the build engine.
+
+### Publish to Docker Hub
+
+Authenticate with Docker Hub and push the built image so it can be consumed from Docker Desktop or other hosts:
+
+```bash
+docker login
+docker tag prospect-portal your-dockerhub-user/prospect-portal:latest
+docker push your-dockerhub-user/prospect-portal:latest
+```
+
+The repository also includes `scripts/publish-docker.sh` to streamline the workflow. Provide the Docker Hub repository name
+(for example `your-dockerhub-user/prospect-portal`) and an optional tag:
+
+```bash
+./scripts/publish-docker.sh your-dockerhub-user/prospect-portal v1
+```
+
+The script simply wraps `docker build` and `docker push`. It assumes you are already logged in (`docker login`) and have the
+appropriate permissions to publish to the chosen repository.
+
 ### Run the container
 
 Provide the required secrets at runtime. The bundled database is available on `postgresql://postgres:postgres@127.0.0.1:5432/prospect_portal` inside the container, so you only need to override it when connecting to an external database.
