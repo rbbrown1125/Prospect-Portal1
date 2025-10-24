@@ -27,6 +27,10 @@ escape_sql_literal() {
   printf "%s" "$1" | sed "s/'/''/g"
 }
 
+escape_sql_identifier() {
+  printf "%s" "$1" | sed 's/"/""/g'
+}
+
 run_as_user() {
   local user="$1"
   shift || true
@@ -75,12 +79,14 @@ start_postgres_once() {
 
     local escaped_password
     escaped_password="$(escape_sql_literal "${POSTGRES_PASSWORD}")"
+    local escaped_user
+    escaped_user="$(escape_sql_identifier "${POSTGRES_USER}")"
 
     if [[ "${POSTGRES_USER}" != "postgres" ]]; then
       run_as_postgres "${CREATEUSER}" --if-not-exists --login --createdb "${POSTGRES_USER}" >/dev/null || true
     fi
 
-    run_as_postgres psql --command "ALTER ROLE \"\"${POSTGRES_USER}\"\" WITH LOGIN PASSWORD '${escaped_password}';" >/dev/null || true
+    run_as_postgres psql --command "ALTER ROLE \"${escaped_user}\" WITH LOGIN PASSWORD '${escaped_password}';" >/dev/null || true
     run_as_postgres "${CREATEDB}" --if-not-exists --owner="${POSTGRES_USER}" "${POSTGRES_DB}" >/dev/null || true
 
     echo "Applying database schema via drizzle-kit push..."
