@@ -86,11 +86,11 @@ start_postgres_once() {
       run_as_postgres "${CREATEUSER}" --if-not-exists --login --createdb "${POSTGRES_USER}" >/dev/null || true
     fi
 
-    run_as_postgres psql --command "ALTER ROLE \"${escaped_user}\" WITH LOGIN PASSWORD '${escaped_password}';" >/dev/null || true
+    run_as_postgres psql --set=ON_ERROR_STOP=1 --command "ALTER ROLE \"${escaped_user}\" WITH LOGIN PASSWORD '${escaped_password}';" >/dev/null || true
     run_as_postgres "${CREATEDB}" --if-not-exists --owner="${POSTGRES_USER}" "${POSTGRES_DB}" >/dev/null || true
 
     echo "Applying database schema via drizzle-kit push..."
-    (cd "${APP_HOME}" && npm run db:push >/dev/null)
+    run_npm_script db:push >/dev/null
 
     run_as_postgres "${PG_CTL}" -D "${PGDATA}" -m fast stop >/dev/null
   fi
