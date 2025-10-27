@@ -29,12 +29,39 @@ Each run performs two tasks:
 
    ```bash
    gunzip -c prospect-portal-image-latest.tar.gz | docker load
-   docker run --rm -p 5000:5000 prospect-portal-build:latest
+   docker tag prospect-portal-build:latest prospect-portal:latest
    ```
+
+   After loading the image you can start it directly (see [Run the container](#run-the-container)). This route avoids Docker
+   Hub entirely—no `docker pull` command is required.
 
 2. *(Optional)* Pushes a multi-architecture image to Docker Hub when `push_to_dockerhub` is set to `true` and the repository is
    configured with `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` secrets. Provide the target repository (for example
    `your-dockerhub-user/prospect-portal`) and an optional `image_tag` when dispatching the workflow.
+
+### Deploy locally without Docker Hub
+
+If you simply want to run the container on your laptop without publishing to any registry:
+
+```bash
+# 1. Build (or load) the image locally
+docker build -t prospect-portal .
+#    –or– download the GitHub Actions artifact and run:
+gunzip -c prospect-portal-image-latest.tar.gz | docker load
+docker tag prospect-portal-build:latest prospect-portal:latest
+
+# 2. Launch the container with the required secrets
+docker run --rm \
+  -p 5000:5000 \
+  -e SESSION_SECRET="replace-with-strong-secret" \
+  -e SENDGRID_API_KEY="<your-sendgrid-api-key>" \
+  -e AIRTABLE_API_KEY="<your-airtable-personal-access-token>" \
+  -e AIRTABLE_BASE_ID="<your-airtable-base-id>" \
+  prospect-portal:latest
+```
+
+Because everything (Node.js, the database, migrations, seeding, and smoke tests) is baked into the image, the container will
+come up fully self-contained on `http://localhost:5000` as soon as the command above finishes.
 
 ### Publish to Docker Hub manually
 
