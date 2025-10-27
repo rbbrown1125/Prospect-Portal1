@@ -1,0 +1,148 @@
+name: Build Prospect Portal image
+
+on:
+  workflow_dispatch:
+    inputs:
+      dockerhub_repository:
+        description: "Optional Docker Hub repository (e.g. username/prospect-portal)"
+        required: false
+        default: ""
+      image_tag:
+        description: "Tag to apply to the built image"
+        required: false
+        default: "latest"
+      push_to_dockerhub:
+        description: "Set to true to push to Docker Hub using stored credentials"
+        required: false
+        default: "false"
+  push:
+    branches:
+      - main
+    paths:
+      - 'Dockerfile'
+      - 'docker-entrypoint.sh'
+      - 'scripts/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/build-and-publish-docker.yml'
+
+env:
+  LOCAL_IMAGE_NAME: prospect-portal-build
+
+jobs:
+  build:
+    name: Build container image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Compute image metadata
+        id: vars
+        run: |
+          TAG="${{ github.event.inputs.image_tag || 'latest' }}"
+          if [ -z "$TAG" ]; then
+            TAG=latest
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          if [ -n "${{ github.event.inputs.dockerhub_repository }}" ]; then
+            echo "remote_image=${{ github.event.inputs.dockerhub_repository }}:$TAG" >> "$GITHUB_OUTPUT"
+          else
+            echo "remote_image=${{ github.repository }}:$TAG" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build image for download
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          tags: ${{ env.LOCAL_IMAGE_NAME }}:${{ steps.vars.outputs.tag }}
+          load: true
+          push: false
+          provenance: false
+
+      - name: Save image artifact
+        run: |
+          mkdir -p dist
+          docker save ${{ env.LOCAL_IMAGE_NAME }}:${{ steps.vars.outputs.tag }} | gzip > dist/prospect-portal-image-${{ steps.vars.outputs.tag }}.tar.gz
+
+      - name: Upload image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: prospect-portal-image-${{ steps.vars.outputs.tag }}
+          path: dist/prospect-portal-image-${{ steps.vars.outputs.tag }}.tar.gz
+          if-no-files-found: error
+
+      - name: Log in to Docker Hub
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.push_to_dockerhub == 'true'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push multi-arch image
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.push_to_dockerhub == 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: ${{ github.event.inputs.dockerhub_repository }}:${{ steps.vars.outputs.tag }}
+          platforms: linux/amd64,linux/arm64
+          provenance: false
+Dockerfile
+New
++45
+-0
+
+# syntax=docker/dockerfile:1
+
+FROM node:20-bookworm-slim AS builder
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm ci
+
+COPY . .
+RUN npm run build
+
+FROM node:20-bookworm-slim AS runner
+WORKDIR /app
+
+ENV PGDATA=/var/lib/postgresql/data \
+    POSTGRES_USER=postgres \
+    POSTGRES_PASSWORD=postgres \
+    POSTGRES_DB=prospect_portal \
+    AIRTABLE_TABLE_NAME=Assets \
+    AIRTABLE_ATTACHMENT_FIELD=File
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends postgresql postgresql-contrib ca-certificates curl \
+  && rm -rf /var/lib/apt/lists/*
+
+COPY package.json package-lock.json ./
+RUN npm ci --include=dev
+
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/server ./server
+COPY --from=builder /app/shared ./shared
+COPY --from=builder /app/migrations ./migrations
+COPY --from=builder /app/scripts ./scripts
+COPY --from=builder /app/drizzle.config.ts ./drizzle.config.ts
+COPY --from=builder /app/tsconfig.json ./tsconfig.json
+COPY docker-entrypoint.sh /usr/local/bin/entrypoint.sh
+
+RUN chmod +x /usr/local/bin/entrypoint.sh && chown -R node:node /app
+
+EXPOSE 5000
+
+ENV NODE_ENV=production
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["node", "dist/index.js"]
