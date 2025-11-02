@@ -100,14 +100,25 @@ export function requireOwnershipOrAdmin(req: any, res: any, next: any) {
 export function setupAuth(app: Express) {
   const PostgresSessionStore = connectPg(session);
   
+  // Create session store with proper error handling
+  const sessionStore = new PostgresSessionStore({
+    conString: process.env.DATABASE_URL,
+    createTableIfMissing: true,
+    tableName: 'sessions', // Explicitly specify table name
+    errorLog: (error: any) => {
+      // Ignore "already exists" errors for table/index creation
+      if (error.code === '42P07') { // PostgreSQL error code for "duplicate table/index"
+        return; // Silently ignore
+      }
+      console.error('Session store error:', error);
+    }
+  });
+  
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || "your-secret-key-change-in-production",
     resave: false,
     saveUninitialized: false,
-    store: new PostgresSessionStore({
-      conString: process.env.DATABASE_URL,
-      createTableIfMissing: true,
-    }),
+    store: sessionStore,
     cookie: {
       secure: false, // Set to true in production with HTTPS
       httpOnly: true,
