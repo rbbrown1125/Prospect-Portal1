@@ -1,7 +1,7 @@
 import { db } from "./db";
 import { templates } from "@shared/schema";
 
-const MAX_RETRIES = 3;
+const MAX_RETRIES = 10; // Increase retries for Docker startup
 const RETRY_DELAY = 1000;
 
 const sampleTemplates = [
@@ -250,10 +250,16 @@ async function delay(ms: number) {
 async function executeWithRetry<T>(fn: () => Promise<T>, retries = MAX_RETRIES): Promise<T> {
   try {
     return await fn();
-  } catch (error) {
+  } catch (error: any) {
     if (retries > 0) {
-      console.log(`Database operation failed, retrying... (${retries} attempts remaining)`);
-      await delay(RETRY_DELAY);
+      // If database doesn't exist, wait longer before retry
+      if (error.code === '3D000') { // Database does not exist
+        console.log(`Database not ready, waiting... (${retries} attempts remaining)`);
+        await delay(3000); // Wait 3 seconds for database
+      } else {
+        console.log(`Database operation failed, retrying... (${retries} attempts remaining)`);
+        await delay(RETRY_DELAY);
+      }
       return executeWithRetry(fn, retries - 1);
     }
     throw error;

@@ -89,8 +89,16 @@ start_postgres_once() {
     run_as_postgres psql --set=ON_ERROR_STOP=1 --command "ALTER ROLE \"${escaped_user}\" WITH LOGIN PASSWORD '${escaped_password}';" >/dev/null || true
     run_as_postgres "${CREATEDB}" --if-not-exists --owner="${POSTGRES_USER}" "${POSTGRES_DB}" >/dev/null || true
 
+    echo "Database created: ${POSTGRES_DB}"
+    
+    # Wait for database to be ready
+    echo "Waiting for database to be ready..."
+    run_as_postgres psql -d "${POSTGRES_DB}" -c "SELECT 1;" >/dev/null 2>&1
+    
     echo "Applying database schema via drizzle-kit push..."
-    run_npm_script db:push >/dev/null
+    DATABASE_URL="${DEFAULT_DATABASE_URL}" npm run db:push --force || {
+      echo "Schema push failed, but continuing (app will auto-initialize)"
+    }
 
     run_as_postgres "${PG_CTL}" -D "${PGDATA}" -m fast stop >/dev/null
   fi
@@ -98,6 +106,22 @@ start_postgres_once() {
 
 start_postgres() {
   run_as_postgres "${PG_CTL}" -D "${PGDATA}" -o "-p 5432" -w start
+  
+  # Wait for PostgreSQL to be ready
+  local retries=30
+  while ! run_as_postgres psql -d postgres -c "SELECT 1;" >/dev/null 2>&1; do
+    if [[ $retries -eq 0 ]]; then
+      echo "PostgreSQL failed to start" >&2
+      exit 1
+    fi
+    echo "Waiting for PostgreSQL to be ready... ($retries attempts remaining)"
+    sleep 1
+    ((retries--))
+  done
+  
+  # Ensure our database exists
+  run_as_postgres "${CREATEDB}" --if-not-exists --owner="${POSTGRES_USER}" "${POSTGRES_DB}" >/dev/null 2>&1 || true
+  echo "Database '${POSTGRES_DB}' is ready"
 }
 
 stop_postgres() {

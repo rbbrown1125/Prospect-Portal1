@@ -13,15 +13,30 @@ async function hashPassword(password: string): Promise<string> {
   return `${buf.toString('hex')}.${salt}`;
 }
 
-// Check if database is initialized
+// Check if database is initialized with retry logic
 async function isDatabaseInitialized(): Promise<boolean> {
-  try {
-    const userCount = await db.select().from(users).limit(1);
-    return userCount.length > 0;
-  } catch (error) {
-    console.log('Database not initialized yet');
-    return false;
+  let retries = 5;
+  
+  while (retries > 0) {
+    try {
+      const userCount = await db.select().from(users).limit(1);
+      return userCount.length > 0;
+    } catch (error: any) {
+      if (error.code === '3D000') { // Database does not exist
+        console.log(`Database not ready yet, waiting... (${retries} attempts remaining)`);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        retries--;
+      } else if (error.code === '42P01') { // Table does not exist
+        console.log('Database tables not created yet');
+        return false;
+      } else {
+        console.log('Database check error:', error.message);
+        return false;
+      }
+    }
   }
+  
+  return false;
 }
 
 // Initialize test users
