@@ -1,8 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
-import { pool } from "./db";
-import { setupAuth, requireAuth, requireAdmin, requireOwnershipOrAdmin } from "./auth";
+import { setupSimpleAuth, requireAuth, requireAdmin } from "./simple-auth";
 import { insertSiteSchema, insertTemplateSchema, insertContentItemSchema, insertSiteViewSchema } from "@shared/schema";
 import { z } from "zod";
 
@@ -14,31 +12,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   };
 
   app.get('/api/health', async (_req, res) => {
-    try {
-      await pool.query('select 1');
-      res.json({ status: 'ok' });
-    } catch (error) {
-      res.status(503).json({
-        status: 'error',
-        message: 'Database unreachable',
-        detail: (error as Error).message,
-      });
-    }
+    // Simple health check - no database needed
+    res.json({ status: 'ok', mode: 'simple', database: 'not-required' });
   });
 
-  // Auth middleware
-  setupAuth(app);
+  // Initialize simple storage
+  const { simpleStorage } = await import("./simple-storage");
+  simpleStorage.init();
+  
+  // Auth middleware  
+  setupSimpleAuth(app);
 
-  // Optimized dashboard endpoint (combines multiple queries for better performance)
+  // Simple dashboard endpoint (no database needed)
   app.get('/api/dashboard/data', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.session?.user?.id || 'demo';
       
-      // Fetch all dashboard data in parallel for 3x faster loading
+      // Fetch dashboard data from in-memory storage
       const [stats, mySites, teamSites] = await Promise.all([
-        storage.getDashboardStats(userId),
-        storage.getMySites(userId),
-        storage.getTeamSites(userId)
+        simpleStorage.getDashboardStats(userId),
+        simpleStorage.getMySites(userId),
+        simpleStorage.getTeamSites(userId)
       ]);
       
       res.json({
@@ -47,7 +41,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         teamSites
       });
     } catch (error) {
-      console.error("Error fetching dashboard data:", error);
+      console.error("Dashboard error:", error);
       res.status(500).json({ message: "Failed to fetch dashboard data" });
     }
   });
