@@ -11,12 +11,16 @@ export interface AirtableUploadResult {
   attachmentId: string;
 }
 
+// TESTING ONLY: Hardcoded API keys (REMOVE IN PRODUCTION)
+const HARDCODED_AIRTABLE_KEY = process.env.AIRTABLE_API_KEY || '';
+const HARDCODED_AIRTABLE_BASE = process.env.AIRTABLE_BASE_ID || '';
+
 const airtableTableName = process.env.AIRTABLE_TABLE_NAME ?? "Assets";
 const airtableAttachmentField = process.env.AIRTABLE_ATTACHMENT_FIELD ?? "File";
 
 function getAirtableConfig(): { apiKey: string; baseId: string } {
-  const apiKey = process.env.AIRTABLE_API_KEY;
-  const baseId = process.env.AIRTABLE_BASE_ID;
+  const apiKey = HARDCODED_AIRTABLE_KEY;
+  const baseId = HARDCODED_AIRTABLE_BASE;
 
   if (!apiKey || !baseId) {
     throw new Error("Airtable integration is not configured. Please set AIRTABLE_API_KEY and AIRTABLE_BASE_ID.");

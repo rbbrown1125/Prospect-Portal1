@@ -1,12 +1,15 @@
 import { MailService } from '@sendgrid/mail';
 
-if (!process.env.SENDGRID_API_KEY) {
-  console.warn("SENDGRID_API_KEY environment variable not set. Email functionality will be disabled.");
+// TESTING ONLY: Hardcoded API key (REMOVE IN PRODUCTION)
+const HARDCODED_SENDGRID_KEY = process.env.SENDGRID_API_KEY || '';
+
+if (!HARDCODED_SENDGRID_KEY) {
+  console.warn("SENDGRID_API_KEY not set. Email functionality will be disabled.");
 }
 
 const mailService = new MailService();
-if (process.env.SENDGRID_API_KEY) {
-  mailService.setApiKey(process.env.SENDGRID_API_KEY);
+if (HARDCODED_SENDGRID_KEY) {
+  mailService.setApiKey(HARDCODED_SENDGRID_KEY);
 }
 
 interface EmailParams {
@@ -18,7 +21,7 @@ interface EmailParams {
 }
 
 export async function sendEmail(params: EmailParams): Promise<boolean> {
-  if (!process.env.SENDGRID_API_KEY) {
+  if (!HARDCODED_SENDGRID_KEY) {
     console.log(`[SENDGRID DISABLED] Would send email to ${params.to} with subject: ${params.subject}`);
     return true; // Return success for development
   }
