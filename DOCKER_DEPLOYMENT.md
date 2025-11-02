@@ -1,11 +1,33 @@
-# Docker Deployment Guide
+# Docker Deployment Guide - SIMPLIFIED
 
-## Overview
-This application is designed to be deployed both on Replit and as a Docker container for local/production deployment. The codebase maintains proper separation between client and server, uses environment variables for configuration, and follows security best practices.
+## 🚀 One-Command Deployment
 
-## Environment Variables Required
+This application is fully self-contained and auto-initializing. Database setup, test users, and sample data are all created automatically on first run.
 
-### Required for Full Functionality
+## Quick Start - Docker
+
+```bash
+# Build and run with embedded PostgreSQL (one command!)
+docker build -t godlan-portal .
+docker run -d -p 5000:5000 --name godlan-portal godlan-portal
+
+# Application will automatically:
+# ✅ Create database and tables
+# ✅ Generate 3 test users
+# ✅ Seed templates and sample data
+# ✅ Display login credentials in console
+```
+
+## Auto-Created Test Users
+
+When the application starts for the first time, it automatically creates:
+- **admin@godlan.com** / **Admin123!** (Admin role)
+- **manager@godlan.com** / **Manager123!** (Admin role)  
+- **john.smith@godlan.com** / **User123!** (User role)
+
+## Environment Variables (Optional)
+
+### For Production Use
 ```bash
 # Database (PostgreSQL)
 DATABASE_URL=postgresql://user:password@host:port/database
@@ -100,39 +122,19 @@ volumes:
   postgres_data:
 ```
 
-## Test Users Created
+## What Gets Auto-Initialized
 
-The application has been seeded with 6 test users for development and testing:
+On first startup, the application automatically creates:
 
-| Email | Password | Role | Name |
-|-------|----------|------|------|
-| admin@godlan.com | Admin123! | Admin | Admin User |
-| manager@godlan.com | Manager123! | Admin | Sarah Johnson |
-| john.smith@godlan.com | User123! | User | John Smith |
-| emily.chen@godlan.com | User123! | User | Emily Chen |
-| mike.davis@godlan.com | User123! | User | Mike Davis |
-| jamie.sales@godlan.com | SamplePass123! | Admin | Jamie Sales |
+✅ **Database Schema** - All tables and indexes  
+✅ **3 Test Users** - Ready-to-use accounts with different roles  
+✅ **3 Templates** - Professional Services, Manufacturing, Quick Start  
+✅ **Sample Site** - With demo access code (shown in console)  
+✅ **Sample Prospects** - Alex Carter, Morgan Lee  
+✅ **Sample Content** - Documents and presentations  
+✅ **Analytics Data** - Sample site views for testing
 
-**Note**: All users must have @godlan.com email addresses to access the application.
-
-## Database Seeding
-
-The database has been populated with:
-- **6 users** (5 test users + 1 sample user)
-- **6 templates** (automatically seeded on first run)
-- **1 sample site** ("Acme Onboarding Portal")
-- **2 prospects** (Alex Carter, Morgan Lee)
-- **3 content items** (sample documents)
-- **6 site views** (analytics data)
-
-### Running Seed Scripts Manually
-```bash
-# Seed sample data (creates sample site, prospects, content)
-npm run seed:samples
-
-# Create additional test users
-tsx scripts/create-test-users.ts
-```
+No manual seeding required! Everything is handled automatically.
 
 ## Security Features
 
@@ -159,18 +161,26 @@ tsx scripts/create-test-users.ts
 - **Fallback**: Can use local file system storage
 - **Setup Required**: Add AIRTABLE_API_KEY and AIRTABLE_BASE_ID if using Airtable
 
-## Production Deployment Checklist
+## Simplified Deployment Features
 
-- [ ] Set strong SESSION_SECRET
-- [ ] Configure DATABASE_URL for production database
-- [ ] Add SENDGRID_API_KEY for email functionality
-- [ ] (Optional) Add AIRTABLE credentials for cloud file storage
-- [ ] Set NODE_ENV=production
-- [ ] Configure reverse proxy (nginx) for SSL/TLS
-- [ ] Set up database backups
-- [ ] Configure logging and monitoring
-- [ ] Review and update CORS settings if needed
-- [ ] Set up health check endpoints
+### 🎯 Key Benefits
+- **Zero Configuration Start** - Works out of the box with embedded PostgreSQL
+- **Auto-Initialization** - Database, users, and data created automatically
+- **Smart Defaults** - Session secrets auto-generated if not provided
+- **Graceful Degradation** - Works without API keys (logs emails, disables uploads)
+- **Port Conflict Handling** - Better error messages for port issues
+
+### 🚢 Production Deployment
+
+For production with external PostgreSQL:
+```bash
+docker run -d \
+  -p 5000:5000 \
+  -e DATABASE_URL="postgresql://user:pass@host/db" \
+  -e SENDGRID_API_KEY="your-key" \
+  -e NODE_ENV="production" \
+  godlan-portal
+```
 
 ## Local Development
 
@@ -189,9 +199,35 @@ npm run build
 npm start
 ```
 
-## Notes
+## Troubleshooting
 
-- The application binds to `0.0.0.0:5000` by default (Docker-friendly)
-- Templates are automatically seeded on first application start
-- The database schema uses Drizzle ORM with PostgreSQL
-- All file paths are relative and portable for Docker deployment
+### Port 5000 Already in Use
+```bash
+# Kill existing process
+pkill -f "node" || lsof -ti:5000 | xargs kill -9
+
+# Or use different port
+docker run -p 8080:5000 godlan-portal
+```
+
+### Login Issues
+- Ensure you're using @godlan.com email addresses
+- Check console for auto-generated credentials
+- Database auto-initializes on first run only
+
+### Reset Everything
+```bash
+# Remove container and volume for fresh start
+docker rm -f godlan-portal
+docker volume prune
+docker run -d -p 5000:5000 --name godlan-portal godlan-portal
+```
+
+## Summary
+
+The application is now **completely self-contained**:
+- ✅ Database auto-creates on first run
+- ✅ Test users generated automatically
+- ✅ Templates and sample data seeded
+- ✅ One command to start everything
+- ✅ No manual scripts required
