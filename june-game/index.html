@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>June's NYC Adventure 🐾</title>
+  <link rel="stylesheet" href="styles/main.css" />
+
+  <!-- Import map: Three.js + addons as ES modules, Cannon-es -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
+      "cannon-es": "https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js"
+    }
+  }
+  </script>
+
+  <!-- Howler.js for background music (loaded as UMD global before modules) -->
+  <script src="https://cdn.jsdelivr.net/npm/howler@2.2.4/dist/howler.min.js"></script>
+
+  <!-- User's Taylor Swift playlist config -->
+  <script src="music/playlist.js"></script>
+</head>
+<body>
+  <div id="game-canvas"></div>
+
+  <!-- Check for importmap support -->
+  <script>
+    if (!HTMLScriptElement.supports || !HTMLScriptElement.supports('importmap')) {
+      document.body.innerHTML = `
+        <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+                    text-align:center;font-family:Arial;color:white;background:#1a1a2e;
+                    padding:40px;border-radius:16px;max-width:400px;">
+          <div style="font-size:48px">😢</div>
+          <h2>Browser Update Needed</h2>
+          <p>This game requires ES Module importmap support.<br>
+             Please use Chrome 89+, Firefox 108+, or Safari 16.4+.</p>
+        </div>
+      `;
+    }
+  </script>
+
+  <!-- Main game entry point -->
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
