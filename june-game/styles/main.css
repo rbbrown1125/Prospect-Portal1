@@ -1,0 +1,171 @@
+/* June's NYC Adventure — Global Styles */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #0a0a1a;
+  font-family: 'Arial', sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Three.js canvas container */
+#game-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+#game-canvas canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* =============================================
+   Touch D-pad (created by InputManager.js)
+   ============================================= */
+
+#dpad {
+  position: fixed;
+  bottom: 30px;
+  right: 20px;
+  width: 130px;
+  height: 130px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 4px;
+  z-index: 110;
+  opacity: 0.75;
+  touch-action: none;
+}
+
+/* Only show D-pad on touch devices */
+@media (hover: hover) and (pointer: fine) {
+  #dpad {
+    display: none;
+  }
+}
+
+.dpad-btn {
+  background: rgba(255, 255, 255, 0.15);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  color: white;
+  cursor: pointer;
+  touch-action: none;
+  transition: background 0.08s, transform 0.08s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.dpad-btn:active,
+.dpad-btn.pressed {
+  background: rgba(255, 215, 0, 0.3);
+  border-color: rgba(255, 215, 0, 0.6);
+  transform: scale(0.92);
+}
+
+.dpad-center {
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+}
+
+/* =============================================
+   Buttons (used in Screens.js)
+   ============================================= */
+
+button {
+  cursor: pointer;
+  font-family: 'Arial', sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+button:active {
+  transform: scale(0.96) !important;
+}
+
+/* =============================================
+   Loading / error states
+   ============================================= */
+
+#loading {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: white;
+  font-size: 24px;
+  z-index: 300;
+}
+
+/* =============================================
+   HUD elements (supplemental to inline styles)
+   ============================================= */
+
+#hud {
+  /* pointer-events: none set inline in HUD.js */
+}
+
+/* Smooth power bar transitions */
+#hud [id$="-bar"] {
+  transition: width 0.1s linear, background 0.3s;
+}
+
+/* =============================================
+   Animations
+   ============================================= */
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.7; transform: scale(0.95); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-6px); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Menu screen paw animation */
+.paw-icon {
+  display: inline-block;
+  animation: float 2s ease-in-out infinite;
+}
+
+/* =============================================
+   Responsive adjustments
+   ============================================= */
+
+@media (max-width: 480px) {
+  #dpad {
+    width: 110px;
+    height: 110px;
+    bottom: 20px;
+    right: 12px;
+  }
+
+  .dpad-btn {
+    font-size: 18px;
+  }
+}
